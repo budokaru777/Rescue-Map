@@ -112,25 +112,14 @@
         .popup-header h3 { margin: 0; color: var(--text-main); font-size: 1.15rem; font-weight: bold; }
         .popup-body { padding: 16px; background-color: #fff; }
         
-        /* 🚨 追加：店舗向け無料広告バナーのスタイル */
         .store-ad-banner {
             background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-            border: 1px solid #bbdefb;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 14px;
-            font-size: 0.8rem;
-            color: #1565c0;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            position: relative;
+            border: 1px solid #bbdefb; border-radius: 8px; padding: 10px; margin-bottom: 14px;
+            font-size: 0.8rem; color: #1565c0; display: flex; flex-direction: column; gap: 2px; position: relative;
         }
         .store-ad-banner::before {
-            content: '無料広告枠';
-            position: absolute; top: 0; right: 0;
-            background: #1565c0; color: white;
-            font-size: 0.6rem; padding: 2px 6px;
+            content: '無料広告枠'; position: absolute; top: 0; right: 0;
+            background: #1565c0; color: white; font-size: 0.6rem; padding: 2px 6px;
             border-radius: 0 7px 0 7px; font-weight: bold;
         }
         .store-ad-title { font-weight: bold; color: #0d47a1; font-size: 0.85rem; padding-right: 50px; }
@@ -303,7 +292,6 @@
                 attribution: 'Tiles &copy; Esri'
             }).addTo(map);
 
-            // 各店舗の「無料広告枠」のコンテンツを追加
             const locations = [
                 { name: "すずらん通りコンビニ A店", lat: 35.683500, lng: 139.765500, item: "チキン南蛮弁当", count: 3, originalPrice: 580, discountPrice: 300, discountRate: "48% OFF", discardIn: 105, urgent: false, ad: "📢 当店限定：ただいま挽きたてコーヒー100円セール実施中！" },
                 { name: "駅前スーパー B店", lat: 35.680000, lng: 139.770000, item: "高級にぎり寿司盛合せ", count: 2, originalPrice: 1280, discountPrice: 640, discountRate: "50% OFF", discardIn: 25, urgent: true, ad: "🤝 【求人】夕方からのレジ・品出しスタッフ大募集！時給1,300円〜" },
@@ -325,17 +313,14 @@
                 const discardTime = formatDiscardTime(loc.discardIn);
                 const discardClass = loc.urgent ? 'discard-timer urgent' : 'discard-timer';
 
-                // 広告バナーを組み込んだポップアップHTML
                 const popupHTML = `
                     <div class="popup-wrapper">
                         <div class="popup-header"><h3>${loc.name}</h3></div>
                         <div class="popup-body">
-                            <!-- 広告掲載枠 -->
                             <div class="store-ad-banner">
                                 <span class="store-ad-title">店舗PR</span>
                                 <span>${loc.ad}</span>
                             </div>
-                            
                             <span class="item-tag">残り ${loc.count}個</span>
                             <p class="item-name">${loc.item}</p>
                             <div class="price-box">
@@ -391,6 +376,7 @@
             }
         }
 
+        // 🚨 注文確定時に buyclear.html へ遷移するよう変更
         function completeOrder() {
             const receiveMethod = document.querySelector('input[name="receive-method"]:checked').value;
             const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
@@ -405,7 +391,9 @@
             }
 
             alert(`【レスキュー受付完了！】\n\n${paymentText}\n${receiveText}`);
-            navigateTo('page-map');
+            
+            // アラートを閉じたら同じフォルダ内の buyclear.html へ移動
+            window.location.href = "buyclear.html";
         }
     </script>
 </body>

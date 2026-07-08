@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>レスキュー・マップ (Rescue Map) - GoogleMap風デモ</title>
+    <title>レスキュー・マップ (Rescue Map) - 広告モデルデモ</title>
+    <!-- Leaflet.js (地図ライブラリ) のCSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -87,48 +88,53 @@
         /* 2. マップページ */
         #map { width: 100%; height: 100%; }
 
-        /* Googleマップピン風のカスタムピン（脈動エフェクト付き） */
+        /* Googleマップピン風のカスタムピン */
         .google-pin-urgent {
-            background-color: #e53e3e;
-            width: 22px; height: 22px;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            position: absolute; left: 50%; top: 50%;
-            margin: -11px 0 0 -11px;
-            border: 2px solid #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            background-color: #e53e3e; width: 22px; height: 22px;
+            border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+            position: absolute; left: 50%; top: 50%; margin: -11px 0 0 -11px;
+            border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .google-pin-urgent::after {
-            content: '';
-            width: 8px; height: 8px;
-            background: white;
-            position: absolute; border-radius: 50%;
-            top: 7px; left: 7px;
-        }
+        .google-pin-urgent::after { content: ''; width: 8px; height: 8px; background: white; position: absolute; border-radius: 50%; top: 7px; left: 7px; }
+        
         .google-pin-normal {
-            background-color: #4285F4; /* Googleブルー */
-            width: 22px; height: 22px;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            position: absolute; left: 50%; top: 50%;
-            margin: -11px 0 0 -11px;
-            border: 2px solid #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            background-color: #4285F4; width: 22px; height: 22px;
+            border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+            position: absolute; left: 50%; top: 50%; margin: -11px 0 0 -11px;
+            border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .google-pin-normal::after {
-            content: '';
-            width: 8px; height: 8px;
-            background: white;
-            position: absolute; border-radius: 50%;
-            top: 7px; left: 7px;
-        }
+        .google-pin-normal::after { content: ''; width: 8px; height: 8px; background: white; position: absolute; border-radius: 50%; top: 7px; left: 7px; }
 
-        /* ポップアップを高級感あるシームレス白に */
+        /* ポップアップ＆広告デザイン */
         .leaflet-popup-content-wrapper { border-radius: 14px; padding: 0; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-        .leaflet-popup-content { margin: 0; width: 290px !important; }
+        .leaflet-popup-content { margin: 0; width: 300px !important; }
         .popup-header { background-color: #fff; padding: 16px 16px 10px 16px; border-bottom: 1px solid #f0f0f0; }
         .popup-header h3 { margin: 0; color: var(--text-main); font-size: 1.15rem; font-weight: bold; }
         .popup-body { padding: 16px; background-color: #fff; }
+        
+        /* 🚨 追加：店舗向け無料広告バナーのスタイル */
+        .store-ad-banner {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 14px;
+            font-size: 0.8rem;
+            color: #1565c0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            position: relative;
+        }
+        .store-ad-banner::before {
+            content: '無料広告枠';
+            position: absolute; top: 0; right: 0;
+            background: #1565c0; color: white;
+            font-size: 0.6rem; padding: 2px 6px;
+            border-radius: 0 7px 0 7px; font-weight: bold;
+        }
+        .store-ad-title { font-weight: bold; color: #0d47a1; font-size: 0.85rem; padding-right: 50px; }
+
         .item-tag { background-color: #ffeebe; color: #b7791f; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; display: inline-block; }
         .item-name { font-weight: bold; color: var(--text-main); margin-bottom: 12px; font-size: 1.05rem; }
         .price-box { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
@@ -184,6 +190,7 @@
         </div>
     </header>
 
+    <!-- 1. 地区選択ページ -->
     <div id="page-select-area" class="page active">
         <div class="welcome-box">
             <h2>サービスを開始</h2>
@@ -197,10 +204,12 @@
         </div>
     </div>
 
+    <!-- 2. マップページ -->
     <div id="page-map" class="page">
         <div id="map"></div>
     </div>
 
+    <!-- 3. 購入ページ -->
     <div id="page-checkout" class="page">
         <div class="checkout-box">
             <h2>注文内容の確認</h2>
@@ -266,6 +275,7 @@
         </div>
     </div>
 
+    <!-- Leaflet.js のJavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
@@ -289,37 +299,43 @@
             map = L.map('map', {zoomControl: false}).setView([35.681236, 139.767125], 15);
             L.control.zoom({position: 'bottomright'}).addTo(map);
 
-            // 【重要】Googleマップ（道路・3D建物の影・色合い）に非常に酷似したEsriの世界詳細地図タイルを適用
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+                attribution: 'Tiles &copy; Esri'
             }).addTo(map);
 
+            // 各店舗の「無料広告枠」のコンテンツを追加
             const locations = [
-                { name: "すずらん通りコンビニ A店", lat: 35.683500, lng: 139.765500, item: "チキン南蛮弁当", count: 3, originalPrice: 580, discountPrice: 300, discountRate: "48% OFF", discardIn: 105, urgent: false },
-                { name: "駅前スーパー B店", lat: 35.680000, lng: 139.770000, item: "高級にぎり寿司盛合せ", count: 2, originalPrice: 1280, discountPrice: 640, discountRate: "50% OFF", discardIn: 25, urgent: true },
-                { name: "丸の内デリ C店", lat: 35.678500, lng: 139.764000, item: "特製アボカドサラダバー", count: 5, originalPrice: 750, discountPrice: 400, discountRate: "46% OFF", discardIn: 135, urgent: false },
-                { name: "大手町ベーカリー D店", lat: 35.685100, lng: 139.762000, item: "焼きたてクロワッサン5個セット", count: 4, originalPrice: 1000, discountPrice: 500, discountRate: "50% OFF", discardIn: 45, urgent: true },
-                { name: "八重洲カフェ E店", lat: 35.679200, lng: 139.773100, item: "本日特製イチゴタルト", count: 1, originalPrice: 650, discountPrice: 350, discountRate: "46% OFF", discardIn: 80, urgent: false },
-                { name: "パシフィック・フレッシュ F店", lat: 35.682100, lng: 139.769500, item: "炭火焼き鳥重", count: 3, originalPrice: 880, discountPrice: 450, discountRate: "49% OFF", discardIn: 15, urgent: true }
+                { name: "すずらん通りコンビニ A店", lat: 35.683500, lng: 139.765500, item: "チキン南蛮弁当", count: 3, originalPrice: 580, discountPrice: 300, discountRate: "48% OFF", discardIn: 105, urgent: false, ad: "📢 当店限定：ただいま挽きたてコーヒー100円セール実施中！" },
+                { name: "駅前スーパー B店", lat: 35.680000, lng: 139.770000, item: "高級にぎり寿司盛合せ", count: 2, originalPrice: 1280, discountPrice: 640, discountRate: "50% OFF", discardIn: 25, urgent: true, ad: "🤝 【求人】夕方からのレジ・品出しスタッフ大募集！時給1,300円〜" },
+                { name: "丸の内デリ C店", lat: 35.678500, lng: 139.764000, item: "特製アボカドサラダバー", count: 5, originalPrice: 750, discountPrice: 400, discountRate: "46% OFF", discardIn: 135, urgent: false, ad: "✨ 新登場：有機野菜をふんだんに使ったヘルシースープが発売開始！" },
+                { name: "大手町ベーカリー D店", lat: 35.685100, lng: 139.762000, item: "焼きたてクロワッサン5個セット", count: 4, originalPrice: 1000, discountPrice: 500, discountRate: "50% OFF", discardIn: 45, urgent: true, ad: "🥐 毎月10日はベーカリーの日！お買い物で次回使えるクーポン進呈" },
+                { name: "八重洲カフェ E店", lat: 35.679200, lng: 139.773100, item: "本日特製イチゴタルト", count: 1, originalPrice: 650, discountPrice: 350, discountRate: "46% OFF", discardIn: 80, urgent: false, ad: "☕️ 平日朝限定：モーニングセットご注文でミニ焼き菓子をプレゼント！" },
+                { name: "パシフィック・フレッシュ F店", lat: 35.682100, lng: 139.769500, item: "炭火焼き鳥重", count: 3, originalPrice: 880, discountPrice: 450, discountRate: "49% OFF", discardIn: 15, urgent: true, ad: "🍱 【事前予約】会議用特製幕の内弁当のWEB注文受付中！" }
             ];
 
             locations.forEach(loc => {
-                // GoogleMapのティアドロップ（しずく型）ピンをCSSで完全再現
                 const pinClass = loc.urgent ? 'google-pin-urgent' : 'google-pin-normal';
                 const icon = L.divIcon({
                     className: 'custom-google-icon',
                     html: `<div class="${pinClass}"></div>`,
-                    iconSize: [24, 24], iconAnchor: [12, 24] // 針の先端を正確に合わせる
+                    iconSize: [24, 24], iconAnchor: [12, 24]
                 });
 
                 const marker = L.marker([loc.lat, loc.lng], {icon: icon}).addTo(map);
                 const discardTime = formatDiscardTime(loc.discardIn);
                 const discardClass = loc.urgent ? 'discard-timer urgent' : 'discard-timer';
 
+                // 広告バナーを組み込んだポップアップHTML
                 const popupHTML = `
                     <div class="popup-wrapper">
                         <div class="popup-header"><h3>${loc.name}</h3></div>
                         <div class="popup-body">
+                            <!-- 広告掲載枠 -->
+                            <div class="store-ad-banner">
+                                <span class="store-ad-title">店舗PR</span>
+                                <span>${loc.ad}</span>
+                            </div>
+                            
                             <span class="item-tag">残り ${loc.count}個</span>
                             <p class="item-name">${loc.item}</p>
                             <div class="price-box">

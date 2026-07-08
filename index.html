@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>レスキュー・マップ (Rescue Map) - 高機能デモ</title>
+    <title>レスキュー・マップ (Rescue Map) - GoogleMap風デモ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -87,20 +87,57 @@
         /* 2. マップページ */
         #map { width: 100%; height: 100%; }
 
-        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
-        .leaflet-popup-content { margin: 0; width: 280px !important; }
-        .popup-header { background-color: var(--bg-card); padding: 15px; border-bottom: 1px solid #eee; }
-        .popup-header h3 { margin: 0; color: var(--text-main); font-size: 1.1rem; }
-        .popup-body { padding: 15px; }
-        .item-tag { background-color: #ffeebe; color: #b7791f; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; display: inline-block; }
-        .item-name { font-weight: bold; color: var(--text-main); margin-bottom: 10px; font-size: 1rem; }
-        .price-box { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
-        .price-discount { color: #e53e3e; font-weight: bold; font-size: 1.3rem; }
-        .price-original { text-decoration: line-through; color: #999; font-size: 0.9rem; }
-        .discount-rate { font-size: 0.85rem; color: #e53e3e; font-weight: bold; }
-        .discard-timer { font-size: 0.85rem; color: #999; display: flex; align-items: center; gap: 5px; margin-bottom: 15px; }
-        .discard-timer.urgent { color: #e53e3e; font-weight: bold; }
-        .btn-goto-checkout { display: block; width: 100%; text-align: center; background-color: var(--primary); color: white; padding: 12px 0; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        /* Googleマップピン風のカスタムピン（脈動エフェクト付き） */
+        .google-pin-urgent {
+            background-color: #e53e3e;
+            width: 22px; height: 22px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            position: absolute; left: 50%; top: 50%;
+            margin: -11px 0 0 -11px;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .google-pin-urgent::after {
+            content: '';
+            width: 8px; height: 8px;
+            background: white;
+            position: absolute; border-radius: 50%;
+            top: 7px; left: 7px;
+        }
+        .google-pin-normal {
+            background-color: #4285F4; /* Googleブルー */
+            width: 22px; height: 22px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            position: absolute; left: 50%; top: 50%;
+            margin: -11px 0 0 -11px;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .google-pin-normal::after {
+            content: '';
+            width: 8px; height: 8px;
+            background: white;
+            position: absolute; border-radius: 50%;
+            top: 7px; left: 7px;
+        }
+
+        /* ポップアップを高級感あるシームレス白に */
+        .leaflet-popup-content-wrapper { border-radius: 14px; padding: 0; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .leaflet-popup-content { margin: 0; width: 290px !important; }
+        .popup-header { background-color: #fff; padding: 16px 16px 10px 16px; border-bottom: 1px solid #f0f0f0; }
+        .popup-header h3 { margin: 0; color: var(--text-main); font-size: 1.15rem; font-weight: bold; }
+        .popup-body { padding: 16px; background-color: #fff; }
+        .item-tag { background-color: #ffeebe; color: #b7791f; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; display: inline-block; }
+        .item-name { font-weight: bold; color: var(--text-main); margin-bottom: 12px; font-size: 1.05rem; }
+        .price-box { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+        .price-discount { color: #e53e3e; font-weight: bold; font-size: 1.4rem; }
+        .price-original { text-decoration: line-through; color: #999; font-size: 0.95rem; }
+        .discount-rate { font-size: 0.9rem; color: #e53e3e; font-weight: bold; background: #fff5f5; padding: 2px 6px; border-radius: 4px; }
+        .discard-timer { font-size: 0.85rem; color: #718096; display: flex; align-items: center; gap: 5px; margin-bottom: 16px; background: #f7f9fa; padding: 6px 10px; border-radius: 6px; }
+        .discard-timer.urgent { color: #e53e3e; font-weight: bold; background: #fff5f5; }
+        .btn-goto-checkout { display: block; width: 100%; text-align: center; background-color: var(--primary); color: white; padding: 14px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 10px rgba(255, 90, 95, 0.2); }
 
         /* 3. 購入ページ */
         #page-checkout {
@@ -117,7 +154,6 @@
         
         .section-title { font-weight: bold; margin: 20px 0 10px 0; font-size: 1rem; color: #111; }
         
-        /* ラジオボタンのカスタムスタイル */
         .option-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
         .option-label {
             display: flex; align-items: center; justify-content: space-between;
@@ -236,7 +272,6 @@
         let currentItemPrice = 0;
         const totalRescuedEl = document.getElementById('total-rescued');
 
-        // カウンターの自動増加
         setInterval(() => {
             let current = parseInt(totalRescuedEl.innerText.replace(',', ''));
             totalRescuedEl.innerText = (current + 1).toLocaleString();
@@ -254,11 +289,11 @@
             map = L.map('map', {zoomControl: false}).setView([35.681236, 139.767125], 15);
             L.control.zoom({position: 'bottomright'}).addTo(map);
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors © CARTO'
+            // 【重要】Googleマップ（道路・3D建物の影・色合い）に非常に酷似したEsriの世界詳細地図タイルを適用
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
             }).addTo(map);
 
-            // 食品データを6つに増量
             const locations = [
                 { name: "すずらん通りコンビニ A店", lat: 35.683500, lng: 139.765500, item: "チキン南蛮弁当", count: 3, originalPrice: 580, discountPrice: 300, discountRate: "48% OFF", discardIn: 105, urgent: false },
                 { name: "駅前スーパー B店", lat: 35.680000, lng: 139.770000, item: "高級にぎり寿司盛合せ", count: 2, originalPrice: 1280, discountPrice: 640, discountRate: "50% OFF", discardIn: 25, urgent: true },
@@ -269,10 +304,12 @@
             ];
 
             locations.forEach(loc => {
+                // GoogleMapのティアドロップ（しずく型）ピンをCSSで完全再現
+                const pinClass = loc.urgent ? 'google-pin-urgent' : 'google-pin-normal';
                 const icon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background-color:${loc.urgent ? '#e53e3e' : '#ff5a5f'}; width:20px; height:20px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 10px rgba(0,0,0,0.2);"></div>`,
-                    iconSize: [26, 26], iconAnchor: [13, 13]
+                    className: 'custom-google-icon',
+                    html: `<div class="${pinClass}"></div>`,
+                    iconSize: [24, 24], iconAnchor: [12, 24] // 針の先端を正確に合わせる
                 });
 
                 const marker = L.marker([loc.lat, loc.lng], {icon: icon}).addTo(map);
@@ -311,7 +348,6 @@
             document.getElementById('checkout-item').innerText = itemName;
             document.getElementById('checkout-price').innerText = `¥${price}`;
             
-            // デリバリーを初期選択に戻す
             document.querySelector('input[name="receive-method"][value="delivery"]').checked = true;
             document.querySelector('input[name="payment-method"][value="paypay"]').checked = true;
             
@@ -319,7 +355,6 @@
             navigateTo('page-checkout');
         }
 
-        // 受け取り方法による金額と支払い方法の動的変更
         function updateTotal() {
             const method = document.querySelector('input[name="receive-method"]:checked').value;
             const shippingEl = document.getElementById('checkout-shipping');
@@ -329,7 +364,6 @@
             if (method === 'delivery') {
                 shippingEl.innerText = "¥200";
                 totalEl.innerText = `¥${currentItemPrice + 200}`;
-                // デリバリー時は現地払いを隠す（選択されていたらPayPayに戻す）
                 cashOption.style.display = "none";
                 if (document.querySelector('input[name="payment-method"]:checked').value === 'cash') {
                     document.querySelector('input[name="payment-method"][value="paypay"]').checked = true;
@@ -337,7 +371,6 @@
             } else {
                 shippingEl.innerText = "¥0";
                 totalEl.innerText = `¥${currentItemPrice}`;
-                // 店舗受け取り時のみ現地払いを表示
                 cashOption.style.display = "flex";
             }
         }

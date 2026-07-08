@@ -1,50 +1,154 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>CASE FILE : PRODUCER-PC</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>レスキュー・マップ (Rescue Map) - デモ</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background-color: #ff5a5f;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        #map {
+            flex-grow: 1;
+            width: 100%;
+        }
+        /* ポップアップ内のカスタムスタイル */
+        .popup-content {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .popup-content h3 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        .item-tag {
+            background-color: #ffeebe;
+            color: #b7791f;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .price-discount {
+            color: #e53e3e;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .price-original {
+            text-decoration: line-through;
+            color: #718096;
+            font-size: 0.85rem;
+            margin-right: 5px;
+        }
+        .btn-order {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background-color: #ff5a5f;
+            color: white;
+            padding: 8px 0;
+            margin-top: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .btn-order:hover {
+            background-color: #e0484c;
+        }
+    </style>
 </head>
 <body>
 
-<div class="terminal">
+    <header>🍲 レスキュー・マップ (Rescue Map)</header>
+    <div id="map"></div>
 
-  <p>CASE FILE : INCIDENT-001</p>
-  <p>USER : IDOL TEAM</p>
-  <p>STATUS : ANALYZING...</p>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 地図の初期化（東京駅周辺をデフォルトに設定）
+        const map = L.map('map').setView([35.681236, 139.767125], 15);
 
-  <h2>▶ 謎１「小箱を開けろ」</h2>
-  <p>パスワードを入力してください（半角数字）</p>
+        // 背景地図タイルの読み込み (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-  <!-- ヒント1 -->
-  <div class="file">
-    <button onclick="toggleHint('hint1')">📁 hint_file_01.txt を開く</button>
-    <div id="hint1" class="hint-content">
-      <img src="images/hint1.png">
-      <p>莉波「６が三回…何か意味があるよね？」</p>
-    </div>
-  </div>
+        // ダミーデータ：廃棄ロスが出そうな店舗情報
+        const locations = [
+            {
+                name: "すずらん通りコンビニ A店",
+                lat: 35.683500,
+                lng: 139.765500,
+                item: "チキン南蛮弁当",
+                count: 3,
+                originalPrice: 580,
+                discountPrice: 300,
+                discountRate: "48% OFF"
+            },
+            {
+                name: "駅前スーパー B店",
+                lat: 35.680000,
+                lng: 139.770000,
+                item: "高級にぎり寿司盛合せ",
+                count: 2,
+                originalPrice: 1280,
+                discountPrice: 640,
+                discountRate: "50% OFF"
+            },
+            {
+                name: "丸の内デリ C店",
+                lat: 35.678500,
+                lng: 139.764000,
+                item: "特製アボカドサラダバー",
+                count: 5,
+                originalPrice: 750,
+                discountPrice: 400,
+                discountRate: "46% OFF"
+            }
+        ];
 
-  <!-- ヒント2 -->
-  <div class="file">
-    <button onclick="toggleHint('hint2')">📁 hint_file_02.txt を開く</button>
-    <div id="hint2" class="hint-content">
-      <img src="images/hint2.png">
-      <p>広「ハ・ホ・ヘに対応してる…？」</p>
-    </div>
-  </div>
+        // 各店舗のピン（マーカー）を地図に追加
+        locations.forEach(loc => {
+            const marker = L.marker([loc.lat, loc.lng]).addTo(map);
+            
+            // ピンをクリックした時に表示されるポップアップのUI
+            const popupHTML = `
+                <div class="popup-content">
+                    <h3>${loc.name}</h3>
+                    <p><span class="item-tag">残り ${loc.count}個</span></p>
+                    <p><strong>商品:</strong> ${loc.item}</p>
+                    <p>
+                        <span class="price-original">¥${loc.originalPrice}</span>
+                        <span class="price-discount">¥${loc.discountPrice} (${loc.discountRate})</span>
+                    </p>
+                    <button class="btn-order" onclick="orderAlert('${loc.name}', '${loc.item}')">レスキューを依頼する (配送料+¥200)</button>
+                </div>
+            `;
+            
+            marker.bindPopup(popupHTML);
+        });
 
-  <!-- ヒント3 -->
-  <div class="file">
-    <button onclick="toggleHint('hint3')">📁 hint_file_03.txt を開く</button>
-    <div id="hint3" class="hint-content">
-      <img src="images/hint3.png">
-      <p>星南「あいうえお表で考えるのよ」</p>
-    </div>
-  </div>
-
-</div>
-
-<script src="script.js"></script>
+        // 注文ボタンが押された時の簡易アクション
+        function orderAlert(shop, item) {
+            alert(`【レスキュー受付！】\n\n${shop}の「${item}」の配送をマッチング中...\n近くの配達員が店舗へ向かいます！`);
+        }
+    </script>
 </body>
 </html>

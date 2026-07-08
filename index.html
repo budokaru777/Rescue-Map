@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>レスキュー・マップ (Rescue Map) - 広告モデルデモ</title>
-    <!-- Leaflet.js (地図ライブラリ) のCSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -179,7 +178,6 @@
         </div>
     </header>
 
-    <!-- 1. 地区選択ページ -->
     <div id="page-select-area" class="page active">
         <div class="welcome-box">
             <h2>サービスを開始</h2>
@@ -193,12 +191,10 @@
         </div>
     </div>
 
-    <!-- 2. マップページ -->
     <div id="page-map" class="page">
         <div id="map"></div>
     </div>
 
-    <!-- 3. 購入ページ -->
     <div id="page-checkout" class="page">
         <div class="checkout-box">
             <h2>注文内容の確認</h2>
@@ -264,7 +260,6 @@
         </div>
     </div>
 
-    <!-- Leaflet.js のJavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
@@ -376,23 +371,8 @@
             }
         }
 
-        // 🚨 注文確定時に buyclear.html へ遷移するよう変更
+        // 🚨 説明アラートを完全に削除し、ダイレクトに遷移するよう変更
         function completeOrder() {
-            const receiveMethod = document.querySelector('input[name="receive-method"]:checked').value;
-            const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
-            
-            let receiveText = receiveMethod === 'delivery' ? "ギグワーカーがご指定の場所までお届けします！" : "店舗レジでアプリの画面を提示して受け取ってください！";
-            let paymentText = "";
-            
-            switch(paymentMethod) {
-                case 'paypay': paymentText = "PayPayでの決済が完了しました。"; break;
-                case 'credit': paymentText = "クレジットカードでの決済が完了しました。"; break;
-                case 'cash': paymentText = "代金は店舗にてお支払いください。"; break;
-            }
-
-            alert(`【レスキュー受付完了！】\n\n${paymentText}\n${receiveText}`);
-            
-            // アラートを閉じたら同じフォルダ内の buyclear.html へ移動
             window.location.href = "buyclear.html";
         }
     </script>

@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>レスキュー・マップ (Rescue Map) - デモ</title>
+    <!-- Leaflet.js (地図ライブラリ) のCSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
             margin: 0;
             padding: 0;
             font-family: 'Helvetica Neue', Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+            background-color: #f7f9fa;
         }
         header {
             background-color: #ff5a5f;
@@ -21,133 +20,236 @@
             text-align: center;
             font-size: 1.2rem;
             font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        #map {
-            flex-grow: 1;
+        /* 画面切り替え用のコンテナ */
+        .page {
+            display: none;
+            height: calc(100vh - 54px);
+        }
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 1. 地区選択ページ */
+        #page-select-area {
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .welcome-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            max-width: 400px;
             width: 100%;
+            box-sizing: border-box;
         }
-        /* ポップアップ内のカスタムスタイル */
-        .popup-content {
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-        .popup-content h3 {
-            margin: 0 0 5px 0;
+        .welcome-box h2 {
+            margin-top: 0;
             color: #333;
         }
-        .item-tag {
-            background-color: #ffeebe;
-            color: #b7791f;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        .price-discount {
-            color: #e53e3e;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        .price-original {
-            text-decoration: line-through;
-            color: #718096;
-            font-size: 0.85rem;
-            margin-right: 5px;
-        }
-        .btn-order {
-            display: block;
+        .area-select {
             width: 100%;
-            text-align: center;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            margin: 20px 0;
+            background-color: #fff;
+        }
+        .btn-start {
+            width: 100%;
             background-color: #ff5a5f;
             color: white;
-            padding: 8px 0;
-            margin-top: 10px;
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            padding: 14px;
+            font-size: 1rem;
             font-weight: bold;
-            text-decoration: none;
+            border-radius: 6px;
+            cursor: pointer;
         }
-        .btn-order:hover {
-            background-color: #e0484c;
+
+        /* 2. マップページ */
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        .popup-content h3 { margin: 0 0 5px 0; color: #333; }
+        .item-tag { background-color: #ffeebe; color: #b7791f; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .price-discount { color: #e53e3e; font-weight: bold; font-size: 1.1rem; }
+        .price-original { text-decoration: line-through; color: #718096; font-size: 0.85rem; margin-right: 5px; }
+        .btn-goto-checkout { display: block; width: 100%; text-align: center; background-color: #ff5a5f; color: white; padding: 8px 0; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        /* 3. 購入ページ */
+        #page-checkout {
+            padding: 20px;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-y: auto;
+        }
+        .checkout-box {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 480px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .receipt-line {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #e53e3e;
+            margin: 20px 0;
+        }
+        .btn-confirm {
+            width: 100%;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
     <header>🍲 レスキュー・マップ (Rescue Map)</header>
-    <div id="map"></div>
 
+    <!-- 1. 地区選択ページ -->
+    <div id="page-select-area" class="page active">
+        <div class="welcome-box">
+            <h2>サービスを開始</h2>
+            <p>フードロスを削減するエリアを選択してください</p>
+            <select class="area-select" id="area-dropdown">
+                <option value="tokyo">東京都 (東京駅周辺エリア)</option>
+                <option value="osaka" disabled>大阪府 (準備中)</option>
+                <option value="nagoya" disabled>愛知県 (準備中)</option>
+            </select>
+            <button class="btn-start" onclick="navigateTo('page-map')">近くのフードを探す ➔</button>
+        </div>
+    </div>
+
+    <!-- 2. マップページ -->
+    <div id="page-map" class="page">
+        <div id="map"></div>
+    </div>
+
+    <!-- 3. 購入ページ -->
+    <div id="page-checkout" class="page">
+        <div class="checkout-box">
+            <h2 style="margin-top:0; color:#333;">注文内容の確認</h2>
+            <p><strong>受け取り店舗:</strong> <span id="checkout-shop">--</span></p>
+            
+            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <div class="receipt-line">
+                    <span>商品: <span id="checkout-item">--</span></span>
+                    <span id="checkout-price">¥0</span>
+                </div>
+                <div class="receipt-line">
+                    <span>デリバリー配送料</span>
+                    <span>¥200</span>
+                </div>
+                <div class="total-line">
+                    <span>合計金額</span>
+                    <span id="checkout-total">¥0</span>
+                </div>
+            </div>
+
+            <p style="font-size:0.85rem; color:#666; margin-bottom:20px;">※ギグワーカーが店舗で商品を回収し、ご指定の場所までお届けします。</p>
+            <button class="btn-confirm" onclick="completeOrder()">注文を確定する（レスキュー実行）</button>
+            <button style="background:none; border:none; color:#718096; width:100%; margin-top:15px; cursor:pointer;" onclick="navigateTo('page-map')">マップに戻る</button>
+        </div>
+    </div>
+
+    <!-- Leaflet.js のJavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 地図の初期化（東京駅周辺をデフォルトに設定）
-        const map = L.map('map').setView([35.681236, 139.767125], 15);
+        let map;
 
-        // 背景地図タイルの読み込み (OpenStreetMap)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        // 画面遷移をコントロールする関数
+        function navigateTo(pageId) {
+            // すべてのページを非表示にする
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            // 指定されたページを表示
+            document.getElementById(pageId).classList.add('active');
 
-        // ダミーデータ：廃棄ロスが出そうな店舗情報
-        const locations = [
-            {
-                name: "すずらん通りコンビニ A店",
-                lat: 35.683500,
-                lng: 139.765500,
-                item: "チキン南蛮弁当",
-                count: 3,
-                originalPrice: 580,
-                discountPrice: 300,
-                discountRate: "48% OFF"
-            },
-            {
-                name: "駅前スーパー B店",
-                lat: 35.680000,
-                lng: 139.770000,
-                item: "高級にぎり寿司盛合せ",
-                count: 2,
-                originalPrice: 1280,
-                discountPrice: 640,
-                discountRate: "50% OFF"
-            },
-            {
-                name: "丸の内デリ C店",
-                lat: 35.678500,
-                lng: 139.764000,
-                item: "特製アボカドサラダバー",
-                count: 5,
-                originalPrice: 750,
-                discountPrice: 400,
-                discountRate: "46% OFF"
+            // マップ画面に遷移した瞬間だけ、地図のサイズを再計算して初期化する（バグ防止）
+            if (pageId === 'page-map' && !map) {
+                initMap();
             }
-        ];
+        }
 
-        // 各店舗のピン（マーカー）を地図に追加
-        locations.forEach(loc => {
-            const marker = L.marker([loc.lat, loc.lng]).addTo(map);
-            
-            // ピンをクリックした時に表示されるポップアップのUI
-            const popupHTML = `
-                <div class="popup-content">
-                    <h3>${loc.name}</h3>
-                    <p><span class="item-tag">残り ${loc.count}個</span></p>
-                    <p><strong>商品:</strong> ${loc.item}</p>
-                    <p>
-                        <span class="price-original">¥${loc.originalPrice}</span>
-                        <span class="price-discount">¥${loc.discountPrice} (${loc.discountRate})</span>
-                    </p>
-                    <button class="btn-order" onclick="orderAlert('${loc.name}', '${loc.item}')">レスキューを依頼する (配送料+¥200)</button>
-                </div>
-            `;
-            
-            marker.bindPopup(popupHTML);
-        });
+        // 地図の初期化
+        function initMap() {
+            map = L.map('map').setView([35.681236, 139.767125], 15);
 
-        // 注文ボタンが押された時の簡易アクション
-        function orderAlert(shop, item) {
-            alert(`【レスキュー受付！】\n\n${shop}の「${item}」の配送をマッチング中...\n近くの配達員が店舗へ向かいます！`);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // 店舗データ
+            const locations = [
+                { name: "すずらん通りコンビニ A店", lat: 35.683500, lng: 139.765500, item: "チキン南蛮弁当", count: 3, originalPrice: 580, discountPrice: 300, discountRate: "48% OFF" },
+                { name: "駅前スーパー B店", lat: 35.680000, lng: 139.770000, item: "高級にぎり寿司盛合せ", count: 2, originalPrice: 1280, discountPrice: 640, discountRate: "50% OFF" },
+                { name: "丸の内デリ C店", lat: 35.678500, lng: 139.764000, item: "特製アボカドサラダバー", count: 5, originalPrice: 750, discountPrice: 400, discountRate: "46% OFF" }
+            ];
+
+            locations.forEach(loc => {
+                const marker = L.marker([loc.lat, loc.lng]).addTo(map);
+                
+                const popupHTML = `
+                    <div class="popup-content">
+                        <h3>${loc.name}</h3>
+                        <p><span class="item-tag">残り ${loc.count}個</span></p>
+                        <p><strong>商品:</strong> ${loc.item}</p>
+                        <p>
+                            <span class="price-original">¥${loc.originalPrice}</span>
+                            <span class="price-discount">¥${loc.discountPrice} (${loc.discountRate})</span>
+                        </p>
+                        <!-- ボタンを押すと購入ページへ進む関数を実行 -->
+                        <button class="btn-goto-checkout" onclick="openCheckout('${loc.name}', '${loc.item}', ${loc.discountPrice})">購入手続きへ進む ➔</button>
+                    </div>
+                `;
+                marker.bindPopup(popupHTML);
+            });
+        }
+
+        // マップのポップアップから購入ページを呼び出す処理
+        function openCheckout(shopName, itemName, price) {
+            // 購入手続き画面の文字を動的に書き換える
+            document.getElementById('checkout-shop').innerText = shopName;
+            document.getElementById('checkout-item').innerText = itemName;
+            document.getElementById('checkout-price').innerText = `¥${price}`;
+            document.getElementById('checkout-total').innerText = `¥${price + 200}`; // 配送料200円をプラス
+            
+            // 購入画面へ遷移
+            navigateTo('page-checkout');
+        }
+
+        // 注文確定時のアラート
+        function completeOrder() {
+            alert("【レスキュー完了！】\n\n決済が完了しました。近くのギグワーカーが商品を受け取りに向かっています！");
+            navigateTo('page-map');
         }
     </script>
 </body>

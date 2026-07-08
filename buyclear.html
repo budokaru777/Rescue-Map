@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>レスキュー完了！ - Rescue Map</title>
+    <style>
+        :root {
+            --primary: #ff5a5f;
+            --success: #28a745;
+            --text-main: #333;
+            --text-sub: #666;
+            --bg-page: #f8f9fa;
+            --bg-card: #ffffff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', Arial, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .clear-box {
+            background: var(--bg-card);
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            max-width: 440px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            margin: 20px;
+        }
+
+        /* 成功を祝うチェックマークアニメーション風 */
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background-color: #eafaf1;
+            color: var(--success);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            margin: 0 auto 24px auto;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin: 0 0 12px 0;
+            color: var(--text-main);
+        }
+
+        .thanks-msg {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0 0 30px 0;
+        }
+
+        /* マッチングステータス（ピッチで未来感を演出するパーツ） */
+        .status-card {
+            background-color: #f1f3f5;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .status-title {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .status-delivery {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(40, 167, 69, 0.2);
+            border-top-color: var(--success);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-text {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #2b2b2b;
+        }
+
+        /* ボタン */
+        .btn-home {
+            display: block;
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(255, 90, 95, 0.2);
+            box-sizing: border-box;
+            transition: background 0.2s;
+        }
+
+        .btn-home:hover {
+            background-color: #e0484c;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="clear-box">
+        <div class="success-icon">✓</div>
+        <h1>レスキュー完了！</h1>
+        <p class="thanks-msg">
+            フードロスの削減にご協力いただき<br>ありがとうございました！
+        </p>
+
+        <div class="status-card">
+            <div class="status-title">現在のステータス</div>
+            <div class="status-delivery">
+                <div class="spinner"></div>
+                <div class="status-text">近くのギグワーカーとマッチング中...</div>
+            </div>
+        </div>
+
+        <a href="index.html" class="btn-home">マップに戻る</a>
+    </div>
+
+</body>
+</html>

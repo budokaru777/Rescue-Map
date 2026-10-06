@@ -1,1 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学習・作業ポータル (Learning Portal)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-muted: #666666;
+            --border-color: #e1e5eb;
+            --primary-color: #4a6cf7;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
 
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-muted: #aaaaaa;
+            --border-color: #333333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-icon:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* サービス別アクセントカラー */
+        .card.classroom:hover { border-color: #0f9d58; }
+        .card.classroom .card-icon { color: #0f9d58; }
+
+        .card.teams:hover { border-color: #6264a7; }
+        .card.teams .card-icon { color: #6264a7; }
+
+        .card.moodle:hover { border-color: #f7931e; }
+        .card.moodle .card-icon { color: #f7931e; }
+
+        .card.notion:hover { border-color: #000000; }
+        [data-theme="dark"] .card.notion:hover { border-color: #ffffff; }
+        .card.notion .card-icon { color: var(--text-color); }
+
+        /* 設定エリア */
+        .settings-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            display: none;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .settings-panel h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .setting-item label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .setting-item input {
+            padding: 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .btn-save {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-graduation-cap"></i> Portal Dashboard</h1>
+        <div class="header-controls">
+            <button class="btn-icon" id="toggle-settings">
+                <i class="fa-solid fa-gear"></i> URL設定
+            </button>
+            <button class="btn-icon" id="toggle-theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- リンクカード一覧 -->
+        <div class="grid">
+            <!-- Google Classroom -->
+            <a href="https://classroom.google.com" target="_blank" rel="noopener noreferrer" class="card classroom" id="link-classroom">
+                <i class="fa-solid fa-chalkboard-user card-icon"></i>
+                <div class="card-title">Google Classroom</div>
+                <div class="card-desc">課題の確認・提出、クラス連絡</div>
+            </a>
+
+            <!-- Microsoft Teams -->
+            <a href="https://teams.microsoft.com" target="_blank" rel="noopener noreferrer" class="card teams" id="link-teams">
+                <i class="fa-solid fa-users card-icon"></i>
+                <div class="card-title">Microsoft Teams</div>
+                <div class="card-desc">チームチャット、オンライン授業</div>
+            </a>
+
+            <!-- Moodle -->
+            <a href="https://moodle.org" target="_blank" rel="noopener noreferrer" class="card moodle" id="link-moodle">
+                <i class="fa-solid fa-graduation-cap card-icon"></i>
+                <div class="card-title">Moodle</div>
+                <div class="card-desc">学習管理・教材・小テスト</div>
+            </a>
+
+            <!-- Notion -->
+            <a href="https://www.notion.so" target="_blank" rel="noopener noreferrer" class="card notion" id="link-notion">
+                <i class="fa-solid fa-book-open card-icon"></i>
+                <div class="card-title">Notion</div>
+                <div class="card-desc">ノート作成・タスク管理・Wiki</div>
+            </a>
+        </div>
+
+        <!-- カスタムURL設定パネル -->
+        <div class="settings-panel" id="settings-panel">
+            <h2><i class="fa-solid fa-pen-to-square"></i> 学校・組織用URLの設定</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                大学や学校専用のMoodleやTeamsのURLがある場合は、以下に入力して保存してください。（ブラウザに保存されます）
+            </p>
+            <form id="url-form">
+                <div class="setting-item">
+                    <label for="input-classroom">Google Classroom URL</label>
+                    <input type="url" id="input-classroom" placeholder="https://classroom.google.com">
+                </div>
+                <div class="setting-item">
+                    <label for="input-teams">Microsoft Teams URL</label>
+                    <input type="url" id="input-teams" placeholder="https://teams.microsoft.com">
+                </div>
+                <div class="setting-item">
+                    <label for="input-moodle">Moodle URL（学校のMoodleアドレス等）</label>
+                    <input type="url" id="input-moodle" placeholder="https://your-school.moodle.com">
+                </div>
+                <div class="setting-item">
+                    <label for="input-notion">Notion URL</label>
+                    <input type="url" id="input-notion" placeholder="https://www.notion.so">
+                </div>
+                <button type="submit" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> 設定を保存</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        &copy; Learning & Work Portal Dashboard
+    </footer>
+
+    <script>
+        // DOM要素
+        const themeBtn = document.getElementById('toggle-theme');
+        const settingsBtn = document.getElementById('toggle-settings');
+        const settingsPanel = document.getElementById('settings-panel');
+        const urlForm = document.getElementById('url-form');
+
+        const links = {
+            classroom: document.getElementById('link-classroom'),
+            teams: document.getElementById('link-teams'),
+            moodle: document.getElementById('link-moodle'),
+            notion: document.getElementById('link-notion')
+        };
+
+        const inputs = {
+            classroom: document.getElementById('input-classroom'),
+            teams: document.getElementById('input-teams'),
+            moodle: document.getElementById('input-moodle'),
+            notion: document.getElementById('input-notion')
+        };
+
+        // ダークモード切替
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            themeBtn.innerHTML = newTheme === 'dark' 
+                ? '<i class="fa-solid fa-sun"></i>' 
+                : '<i class="fa-solid fa-moon"></i>';
+            localStorage.setItem('portal_theme', newTheme);
+        });
+
+        // 初期テーマ設定の読み込み
+        const savedTheme = localStorage.getItem('portal_theme');
+        if (savedTheme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            themeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        }
+
+        // 設定パネルの表示切替
+        settingsBtn.addEventListener('click', () => {
+            settingsPanel.classList.toggle('active');
+        });
+
+        // URLの設定保存 & 読み込み機能
+        function loadCustomURLs() {
+            Object.keys(links).forEach(key => {
+                const savedUrl = localStorage.getItem(`portal_url_${key}`);
+                if (savedUrl) {
+                    links[key].href = savedUrl;
+                    inputs[key].value = savedUrl;
+                } else {
+                    inputs[key].value = links[key].href;
+                }
+            });
+        }
+
+        urlForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            Object.keys(links).forEach(key => {
+                const newUrl = inputs[key].value.trim();
+                if (newUrl) {
+                    links[key].href = newUrl;
+                    localStorage.setItem(`portal_url_${key}`, newUrl);
+                }
+            });
+            alert('URL設定を保存しました！');
+            settingsPanel.classList.remove('active');
+        });
+
+        // 初期化
+        loadCustomURLs();
+    </script>
+</body>
+</html>

@@ -1,0 +1,381 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduCentral - Learning Portal Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .card-hover {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+
+    <header class="sticky top-0 z-40 w-full backdrop-blur border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600 text-white rounded-xl shadow-md">
+                    <i class="ph ph-graduation-cap text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">EduCentral</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Hub for Learning Platforms</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Add Custom Link Button -->
+                <button onclick="openModal()" class="flex items-center gap-2 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    <i class="ph ph-plus-bold"></i>
+                    <span class="hidden sm:inline">Add Platform</span>
+                </button>
+
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" onclick="toggleTheme()" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <i id="themeIcon" class="ph ph-moon text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 flex flex-col gap-8">
+        
+        <!-- Welcome Hero Section -->
+        <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-8 md:p-10 shadow-xl">
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur rounded-full text-xs font-semibold mb-3">All-in-One Workspace</span>
+                <h2 class="text-2xl md:text-4xl font-extrabold tracking-tight mb-2">Welcome to your Learning Hub</h2>
+                <p class="text-blue-100 text-sm md:text-base mb-6">Access Google Classroom, Teams, Moodle, and Notion seamlessly from a single dashboard.</p>
+                
+                <!-- Quick Search Input -->
+                <div class="relative max-w-lg">
+                    <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                    <input type="text" id="searchInput" oninput="filterCards()" placeholder="Search platforms or links..." 
+                        class="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 rounded-2xl shadow-lg border-0 focus:ring-2 focus:ring-white/50 text-sm">
+                </div>
+            </div>
+            <div class="absolute -right-10 -bottom-10 opacity-10 text-[200px] pointer-events-none">
+                <i class="ph ph-planet"></i>
+            </div>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i class="ph ph-squares-four text-blue-500"></i>
+                    Primary Platforms
+                </h3>
+            </div>
+            <div id="platformsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Dynamic cards populated via JS -->
+            </div>
+        </section>
+
+        <!-- Custom Links Section -->
+        <section class="mt-2">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i class="ph ph-bookmark-simple text-purple-500"></i>
+                    Custom Bookmarks
+                </h3>
+                <span id="customCount" class="text-xs text-slate-500 dark:text-slate-400">0 items</span>
+            </div>
+            <div id="customGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Custom cards inserted here -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 px-4 text-center text-xs text-slate-500 dark:text-slate-400">
+        <p>EduCentral Portal &bull; Easily manage and access your educational toolset</p>
+    </footer>
+
+    <div id="linkModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700 transform scale-95 transition-transform duration-200" id="modalContainer">
+            <div class="flex items-center justify-between mb-5">
+                <h3 id="modalTitle" class="text-lg font-bold">Add Custom Link</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <form id="linkForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="linkId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Platform Name</label>
+                    <input type="text" id="linkTitle" required placeholder="e.g. University Portal" 
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">URL</label>
+                    <input type="url" id="linkUrl" required placeholder="https://example.com" 
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Icon Class (Phosphor Icons)</label>
+                    <input type="text" id="linkIcon" placeholder="ph-link (e.g., ph-book, ph-globe)" 
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Description</label>
+                    <textarea id="linkDesc" rows="2" placeholder="Brief note or description..." 
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-3">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md">Save Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Core Default Platforms Configuration
+        const defaultPlatforms = [
+            {
+                id: 'classroom',
+                title: 'Google Classroom',
+                url: 'https://classroom.google.com',
+                icon: 'ph-chalkboard-teacher',
+                color: 'from-emerald-500 to-green-600',
+                bgLight: 'bg-emerald-50 text-emerald-600',
+                desc: 'Access assignments, classes, and course announcements.'
+            },
+            {
+                id: 'teams',
+                title: 'Microsoft Teams',
+                url: 'https://teams.microsoft.com',
+                icon: 'ph-users-three',
+                color: 'from-indigo-500 to-purple-600',
+                bgLight: 'bg-indigo-50 text-indigo-600',
+                desc: 'Join online classes, group chats, and video meetings.'
+            },
+            {
+                id: 'moodle',
+                title: 'Moodle LMS',
+                url: 'https://moodle.org',
+                icon: 'ph-graduation-cap',
+                color: 'from-amber-500 to-orange-600',
+                bgLight: 'bg-amber-50 text-amber-600',
+                desc: 'View course modules, grades, and submit assignments.'
+            },
+            {
+                id: 'notion',
+                title: 'Notion Workspace',
+                url: 'https://www.notion.so',
+                icon: 'ph-notebook',
+                color: 'from-slate-700 to-slate-900',
+                bgLight: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
+                desc: 'Manage class notes, task lists, and study schedules.'
+            }
+        ];
+
+        let customLinks = JSON.parse(localStorage.getItem('edu_custom_links') || '[]');
+
+        // Initialize Theme Mode
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').className = 'ph ph-sun text-lg';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').className = 'ph ph-moon text-lg';
+            }
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('themeIcon').className = 'ph ph-moon text-lg';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('themeIcon').className = 'ph ph-sun text-lg';
+            }
+        }
+
+        function renderCards() {
+            const platformContainer = document.getElementById('platformsGrid');
+            const customContainer = document.getElementById('customGrid');
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+
+            // Filter Platforms
+            const filteredDefaults = defaultPlatforms.filter(item => 
+                item.title.toLowerCase().includes(searchVal) || item.desc.toLowerCase().includes(searchVal)
+            );
+
+            platformContainer.innerHTML = filteredDefaults.map(p => `
+                <a href="${p.url}" target="_blank" rel="noopener noreferrer" 
+                    class="card-hover group relative block p-6 bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-xl transition-all">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3.5 rounded-2xl ${p.bgLight} text-2xl shadow-inner">
+                            <i class="ph ${p.icon}"></i>
+                        </div>
+                        <span class="p-1.5 text-slate-400 group-hover:text-blue-500 transition-colors">
+                            <i class="ph ph-arrow-up-right text-lg"></i>
+                        </span>
+                    </div>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-base mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">${p.title}</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">${p.desc}</p>
+                </a>
+            `).join('');
+
+            // Filter Custom Links
+            const filteredCustom = customLinks.filter(item => 
+                item.title.toLowerCase().includes(searchVal) || (item.desc && item.desc.toLowerCase().includes(searchVal))
+            );
+
+            document.getElementById('customCount').innerText = `${filteredCustom.length} items`;
+
+            if (filteredCustom.length === 0) {
+                customContainer.innerHTML = `
+                    <div class="col-span-full py-10 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                        <i class="ph ph-plus-circle text-3xl text-slate-400 mb-2"></i>
+                        <p class="text-sm font-medium text-slate-500">No custom links added yet.</p>
+                        <button onclick="openModal()" class="mt-2 text-xs text-blue-600 hover:underline">Add your first bookmark</button>
+                    </div>
+                `;
+            } else {
+                customContainer.innerHTML = filteredCustom.map(c => `
+                    <div class="card-hover group relative block p-6 bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-xl transition-all">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-3.5 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-2xl shadow-inner">
+                                <i class="ph ${c.icon || 'ph-link'}"></i>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="editCustomLink('${c.id}')" class="p-1.5 text-slate-400 hover:text-blue-500 transition-colors">
+                                    <i class="ph ph-pencil-simple text-md"></i>
+                                </button>
+                                <button onclick="deleteCustomLink('${c.id}')" class="p-1.5 text-slate-400 hover:text-red-500 transition-colors">
+                                    <i class="ph ph-trash text-md"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="block">
+                            <h4 class="font-bold text-slate-900 dark:text-white text-base mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors flex items-center justify-between">
+                                ${c.title}
+                                <i class="ph ph-arrow-up-right text-sm text-slate-400"></i>
+                            </h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">${c.desc || 'Custom quick-access platform link.'}</p>
+                        </a>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function filterCards() {
+            renderCards();
+        }
+
+        function openModal() {
+            document.getElementById('linkId').value = '';
+            document.getElementById('linkForm').reset();
+            document.getElementById('modalTitle').innerText = 'Add Custom Link';
+            
+            const modal = document.getElementById('linkModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modalContainer').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('linkModal');
+            modal.classList.add('opacity-0');
+            document.getElementById('modalContainer').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('linkId').value || 'custom_' + Date.now();
+            const title = document.getElementById('linkTitle').value;
+            const url = document.getElementById('linkUrl').value;
+            const icon = document.getElementById('linkIcon').value || 'ph-link';
+            const desc = document.getElementById('linkDesc').value;
+
+            const existingIndex = customLinks.findIndex(item => item.id === id);
+            const linkData = { id, title, url, icon, desc };
+
+            if (existingIndex > -1) {
+                customLinks[existingIndex] = linkData;
+            } else {
+                customLinks.push(linkData);
+            }
+
+            localStorage.setItem('edu_custom_links', JSON.stringify(customLinks));
+            closeModal();
+            renderCards();
+        }
+
+        function editCustomLink(id) {
+            const item = customLinks.find(c => c.id === id);
+            if (!item) return;
+
+            document.getElementById('linkId').value = item.id;
+            document.getElementById('linkTitle').value = item.title;
+            document.getElementById('linkUrl').value = item.url;
+            document.getElementById('linkIcon').value = item.icon || '';
+            document.getElementById('linkDesc').value = item.desc || '';
+            
+            document.getElementById('modalTitle').innerText = 'Edit Custom Link';
+            
+            const modal = document.getElementById('linkModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modalContainer').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function deleteCustomLink(id) {
+            customLinks = customLinks.filter(c => c.id !== id);
+            localStorage.setItem('edu_custom_links', JSON.stringify(customLinks));
+            renderCards();
+        }
+
+        // Initialize Application
+        window.onload = function() {
+            initTheme();
+            renderCards();
+        };
+    </script>
+</body>
+</html>

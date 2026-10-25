@@ -151,36 +151,8 @@
         [data-theme="dark"] .card.notion:hover { border-color: #ffffff; }
         .card.notion .card-icon { color: var(--text-color); }
 
-        /* カレンダーエリア */
-        .calendar-section {
-            margin-top: 2rem;
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-        }
-
-        .calendar-section h2 {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .calendar-container {
-            width: 100%;
-            height: 550px;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .calendar-container iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
+        .card.calendar-card:hover { border-color: #4285f4; }
+        .card.calendar-card .card-icon { color: #4285f4; }
 
         /* 設定エリア */
         .settings-panel {
@@ -264,6 +236,13 @@
                 <div class="card-desc">課題の確認・提出、クラス連絡</div>
             </a>
 
+            <!-- Google Calendar -->
+            <a href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener noreferrer" class="card calendar-card" id="link-calendar">
+                <i class="fa-solid fa-calendar-days card-icon"></i>
+                <div class="card-title">課題カレンダー</div>
+                <div class="card-desc">すべての全教科課題・締め切りを確認</div>
+            </a>
+
             <!-- Microsoft Teams -->
             <a href="https://teams.microsoft.com" target="_blank" rel="noopener noreferrer" class="card teams" id="link-teams">
                 <i class="fa-solid fa-users card-icon"></i>
@@ -286,28 +265,20 @@
             </a>
         </div>
 
-        <!-- カレンダー埋め込みエリア -->
-        <div class="calendar-section">
-            <h2><i class="fa-solid fa-calendar-days"></i> 課題・提出期限カレンダー</h2>
-            <div class="calendar-container">
-                <iframe id="calendar-iframe" src="about:blank" scrolling="no"></iframe>
-            </div>
-        </div>
-
         <!-- カスタム設定パネル -->
         <div class="settings-panel" id="settings-panel">
-            <h2><i class="fa-solid fa-pen-to-square"></i> 設定（URL・カレンダー）</h2>
+            <h2><i class="fa-solid fa-pen-to-square"></i> 設定（URL）</h2>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                大学や学校専用のURLや、ClassroomのカレンダーIDを入力してください。（複数ある場合はカンマ `,` 区切りで入力可能です）
+                大学や学校専用のURLに自由に変更できます。（設定はブラウザに保存されます）
             </p>
             <form id="url-form">
                 <div class="setting-item">
-                    <label for="input-calendar-id">Google カレンダー ID（複数登録はカンマ区切り）</label>
-                    <input type="text" id="input-calendar-id" placeholder="c_xxxxx@group.calendar.google.com, yourname@st.omu.ac.jp">
-                </div>
-                <div class="setting-item">
                     <label for="input-classroom">Google Classroom URL</label>
                     <input type="url" id="input-classroom" placeholder="https://classroom.google.com">
+                </div>
+                <div class="setting-item">
+                    <label for="input-calendar">Google Calendar URL</label>
+                    <input type="url" id="input-calendar" placeholder="https://calendar.google.com/calendar/u/0/r">
                 </div>
                 <div class="setting-item">
                     <label for="input-teams">Microsoft Teams URL</label>
@@ -336,10 +307,10 @@
         const settingsBtn = document.getElementById('toggle-settings');
         const settingsPanel = document.getElementById('settings-panel');
         const urlForm = document.getElementById('url-form');
-        const calendarIframe = document.getElementById('calendar-iframe');
 
         const links = {
             classroom: document.getElementById('link-classroom'),
+            calendar: document.getElementById('link-calendar'),
             teams: document.getElementById('link-teams'),
             moodle: document.getElementById('link-moodle'),
             notion: document.getElementById('link-notion')
@@ -347,10 +318,10 @@
 
         const inputs = {
             classroom: document.getElementById('input-classroom'),
+            calendar: document.getElementById('input-calendar'),
             teams: document.getElementById('input-teams'),
             moodle: document.getElementById('input-moodle'),
-            notion: document.getElementById('input-notion'),
-            calendarId: document.getElementById('input-calendar-id')
+            notion: document.getElementById('input-notion')
         };
 
         // ダークモード切替
@@ -376,9 +347,8 @@
             settingsPanel.classList.toggle('active');
         });
 
-        // URL & カレンダーID の設定保存 & 読み込み
+        // URLの設定保存 & 読み込み
         function loadSettings() {
-            // URLの読み込み
             Object.keys(links).forEach(key => {
                 const savedUrl = localStorage.getItem(`portal_url_${key}`);
                 if (savedUrl) {
@@ -388,50 +358,12 @@
                     inputs[key].value = links[key].href;
                 }
             });
-
-            // GoogleカレンダーIDの読み込み（初期値は日本の祝日カレンダー）
-            const savedCalendarId = localStorage.getItem('portal_calendar_id') || 'ja.japanese#holiday@group.v.calendar.google.com';
-            inputs.calendarId.value = savedCalendarId;
-            
-            // カレンダーの表示更新
-            updateCalendar(savedCalendarId);
-        }
-
-        // カレンダー表示ロジックの強化（複数ID対応 & 自動整形機能付き）
-        function updateCalendar(calendarInput) {
-            if (!calendarInput || !calendarInput.trim()) return;
-
-            // カンマ区切りで複数のIDを取得
-            const rawIds = calendarInput.split(',');
-            const validParams = [];
-
-            rawIds.forEach(item => {
-                let cleanId = item.trim();
-                
-                // もし誤って embed 用の URL 全体を貼り付けてしまった場合の救済処理
-                if (cleanId.includes('src=')) {
-                    const match = cleanId.match(/src=([^&]+)/);
-                    if (match && match[1]) {
-                        cleanId = decodeURIComponent(match[1]);
-                    }
-                }
-
-                if (cleanId) {
-                    validParams.push(`src=${encodeURIComponent(cleanId)}`);
-                }
-            });
-
-            if (validParams.length > 0) {
-                const srcQuery = validParams.join('&');
-                calendarIframe.src = `https://calendar.google.com/calendar/embed?${srcQuery}&ctz=Asia%2FTokyo`;
-            }
         }
 
         // フォーム送信時の処理
         urlForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
-            // URL保存
             Object.keys(links).forEach(key => {
                 const newUrl = inputs[key].value.trim();
                 if (newUrl) {
@@ -439,13 +371,6 @@
                     localStorage.setItem(`portal_url_${key}`, newUrl);
                 }
             });
-
-            // カレンダーID保存
-            const newCalId = inputs.calendarId.value.trim();
-            if (newCalId) {
-                localStorage.setItem('portal_calendar_id', newCalId);
-                updateCalendar(newCalId);
-            }
 
             alert('設定を保存しました！');
             settingsPanel.classList.remove('active');

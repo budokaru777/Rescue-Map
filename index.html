@@ -249,33 +249,6 @@
             border: 1px solid var(--border-color);
             margin-bottom: 10px;
         }
-
-        /* 設定パネル */
-        .settings-panel {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            display: none;
-            box-shadow: var(--shadow);
-        }
-
-        .settings-panel.active { display: block; }
-
-        .setting-item {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            margin-bottom: 1rem;
-        }
-
-        .setting-item input {
-            padding: 0.6rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-color);
-            color: var(--text-color);
-        }
     </style>
 </head>
 <body>
@@ -283,7 +256,6 @@
     <header>
         <h1><i class="fa-solid fa-graduation-cap"></i> Portal & AI Workspace</h1>
         <div class="header-controls">
-            <button class="btn-icon" id="toggle-settings"><i class="fa-solid fa-gear"></i> 設定</button>
             <button class="btn-icon" id="toggle-theme"><i class="fa-solid fa-moon"></i></button>
         </div>
     </header>
@@ -327,45 +299,26 @@
             <div class="ai-card">
                 <h2><i class="fa-solid fa-wand-magic-sparkles" style="color: #f7931e;"></i> 課題プロトタイプ生成</h2>
                 <div class="prototype-output" id="prototype-output">
-                    下の入力欄に課題のタイトルや概要を入力するか、「サンプル課題で作成」を押すとAIが構成案（プロトタイプ）を作成します。
+                    下の入力欄に課題のタイトルや概要を入力してボタンを押すと、AIが構成案（プロトタイプ）を作成します。
                 </div>
                 <div class="chat-input-box" style="flex-direction: column; gap: 8px;">
-                    <input type="text" id="task-input" placeholder="課題名・テーマを入力 (例: 憲法第9条についてのレポート)">
+                    <input type="text" id="task-input" placeholder="課題名・テーマを入力 (例: 物理学演習第3回レポート)">
                     <button class="btn-action" id="gen-prototype-btn" style="width: 100%; justify-content: center;">
                         <i class="fa-solid fa-bolt"></i> プロトタイプ（骨子）を即座に自動生成
                     </button>
                 </div>
             </div>
         </div>
-
-        <!-- 設定パネル -->
-        <div class="settings-panel" id="settings-panel">
-            <h2><i class="fa-solid fa-key"></i> API 設定</h2>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                Gemini API Key を入力すると、ポータル上で直接 AI が利用できるようになります。
-            </p>
-            <form id="api-form">
-                <div class="setting-item">
-                    <label for="gemini-api-key">Gemini API Key</label>
-                    <input type="password" id="gemini-api-key" placeholder="AI Studioで発行したキーを貼り付け">
-                </div>
-                <button type="submit" class="btn-action"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
-            </form>
-        </div>
     </div>
 
     <script>
-        // 設定読み込み
-        const settingsBtn = document.getElementById('toggle-settings');
-        const settingsPanel = document.getElementById('settings-panel');
-        const apiForm = document.getElementById('api-form');
-        const apiKeyInput = document.getElementById('gemini-api-key');
-        const themeBtn = document.getElementById('toggle-theme');
-
-        let geminiApiKey = localStorage.getItem('portal_gemini_key') || '';
-        if (geminiApiKey) apiKeyInput.value = geminiApiKey;
+        // ==========================================
+        //
+        // ==========================================
+        const GEMINI_API_KEY = 'ここに_GEMINI_API_KEY_を貼り付け';
 
         // テーマ切替
+        const themeBtn = document.getElementById('toggle-theme');
         themeBtn.addEventListener('click', () => {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -373,26 +326,14 @@
             themeBtn.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
         });
 
-        // 設定パネル開閉
-        settingsBtn.addEventListener('click', () => settingsPanel.classList.toggle('active'));
-
-        // API Key 保存
-        apiForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            geminiApiKey = apiKeyInput.value.trim();
-            localStorage.setItem('portal_gemini_key', geminiApiKey);
-            alert('APIキーを保存しました！');
-            settingsPanel.classList.remove('active');
-        });
-
         // Gemini API 呼び出し関数
         async function askGemini(prompt) {
-            if (!geminiApiKey) {
-                alert('右上の「設定」から Gemini API Key を設定してください！');
-                return null;
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === 'ここに_GEMINI_API_KEY_を貼り付け') {
+                return 'エラー: コード内の GEMINI_API_KEY が設定されていません。自分のAPIキーに書き換えてください。';
             }
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+            // 最新モデルのAPIエンドポイント
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
 
             try {
@@ -401,11 +342,17 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                
                 const data = await response.json();
+                
+                if (data.error) {
+                    return `APIエラー: ${data.error.message}`;
+                }
+
                 return data.candidates[0].content.parts[0].text;
             } catch (err) {
                 console.error(err);
-                return 'エラーが発生しました。APIキーまたはネットワークを確認してください。';
+                return '通信エラーが発生しました。ネットワークまたはAPIキーを確認してください。';
             }
         }
 
@@ -418,14 +365,12 @@
             const text = chatInput.value.trim();
             if (!text) return;
 
-            // ユーザーメッセージ表示
             appendMessage(text, 'user');
             chatInput.value = '';
 
-            // AI応答待ち
             const loadingMsg = appendMessage('思考中...', 'ai');
             const reply = await askGemini(`大学の学習アシスタントとして以下の質問に分かりやすく答えてください:\n${text}`);
-            loadingMsg.innerText = reply || '回答を取得できませんでした。';
+            loadingMsg.innerText = reply;
         }
 
         function appendMessage(text, sender) {
@@ -446,7 +391,12 @@
         const prototypeOutput = document.getElementById('prototype-output');
 
         genPrototypeBtn.addEventListener('click', async () => {
-            const taskName = taskInput.value.trim() || 'サンプル課題：大学での生成AI活用についてのレポート';
+            const taskName = taskInput.value.trim();
+            if (!taskName) {
+                alert('課題名またはテーマを入力してください！');
+                return;
+            }
+
             prototypeOutput.innerText = 'AIが課題の骨子・構成案（プロトタイプ）を作成中...';
 
             const prompt = `
@@ -464,7 +414,7 @@ ${taskName}
 `;
 
             const res = await askGemini(prompt);
-            prototypeOutput.innerText = res || 'プロトタイプの生成に失敗しました。';
+            prototypeOutput.innerText = res;
         });
     </script>
 </body>

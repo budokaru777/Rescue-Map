@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学習ポータル & Gemini Launcher</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-muted: #666666;
+            --border-color: #e1e5eb;
+            --primary-color: #4a6cf7;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-muted: #aaaaaa;
+            --border-color: #333333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-icon:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* ショートカットカード */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .card.classroom .card-icon { color: #0f9d58; }
+        .card.calendar-card .card-icon { color: #4285f4; }
+        .card.teams .card-icon { color: #6264a7; }
+        .card.moodle .card-icon { color: #f7931e; }
+
+        /* 設定パネル */
+        .settings-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: none;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-panel.active { display: block; }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .setting-item label {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .setting-item input {
+            padding: 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* カレンダー＆AI転送セクション */
+        .calendar-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Gemini 転送コントロール */
+        .task-transfer-box {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .task-transfer-box h3 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-color);
+        }
+
+        .transfer-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .transfer-inputs { flex-direction: column; }
+        }
+
+        .transfer-inputs input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        .btn-gemini {
+            background: linear-gradient(135deg, #4285f4, #9b51e0);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+            white-space: nowrap;
+        }
+
+        .btn-gemini:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-action {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-graduation-cap"></i> Portal & Gemini Launcher</h1>
+        <div class="header-controls">
+            <button class="btn-icon" id="toggle-settings"><i class="fa-solid fa-gear"></i> 設定</button>
+            <button class="btn-icon" id="toggle-theme"><i class="fa-solid fa-moon"></i></button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 設定パネル -->
+        <div class="settings-panel" id="settings-panel">
+            <h2><i class="fa-solid fa-sliders"></i> ポータル設定</h2>
+            <form id="settings-form" style="margin-top: 1rem;">
+                <div class="setting-item">
+                    <label for="calendar-id">Google カレンダー ID (メールアドレス)</label>
+                    <input type="email" id="calendar-id" placeholder="rf24059q@st.omu.ac.jp">
+                </div>
+                <button type="submit" class="btn-action"><i class="fa-solid fa-floppy-disk"></i> 設定を保存</button>
+            </form>
+        </div>
+
+        <!-- 1. ショートカットリンク -->
+        <div class="grid">
+            <a href="https://classroom.google.com" target="_blank" class="card classroom">
+                <i class="fa-solid fa-chalkboard-user card-icon"></i>
+                <div class="card-title">Classroom</div>
+            </a>
+            <a href="https://calendar.google.com" target="_blank" class="card calendar-card">
+                <i class="fa-solid fa-calendar-days card-icon"></i>
+                <div class="card-title">カレンダー</div>
+            </a>
+            <a href="https://teams.microsoft.com" target="_blank" class="card teams">
+                <i class="fa-solid fa-users card-icon"></i>
+                <div class="card-title">Teams</div>
+            </a>
+            <a href="https://moodle.org" target="_blank" class="card moodle">
+                <i class="fa-solid fa-graduation-cap card-icon"></i>
+                <div class="card-title">Moodle</div>
+            </a>
+        </div>
+
+        <!-- 2. カレンダー & Gemini 課題転送連携 -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <h2><i class="fa-solid fa-calendar-check" style="color: #4285f4;"></i> 提出予定課題 & Gemini 連携</h2>
+                <span id="cal-status-text" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+            </div>
+
+            <!-- カレンダー表示 -->
+            <div class="calendar-container">
+                <iframe id="calendar-iframe" src="about:blank"></iframe>
+            </div>
+
+            <!-- カレンダーで見つけた課題を Gemini に送信するボックス -->
+            <div class="task-transfer-box">
+                <h3><i class="fa-solid fa-wand-magic-sparkles"></i> カレンダーの課題を Gemini にコピー＆起動</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">
+                    課題名を入力してボタンを押すと指示文が自動コピーされ、Gemini が開きます。開いた画面で <strong>Ctrl + V</strong> (Macは <strong>Cmd + V</strong>) を押して貼り付けてください。
+                </p>
+                <div class="transfer-inputs">
+                    <input type="text" id="task-title-input" placeholder="カレンダーにある課題名を入力 (例: 情報科学演習 レポート第2回)">
+                    <button class="btn-gemini" id="send-to-gemini-btn">
+                        <i class="fa-solid fa-copy"></i> プロンプトをコピーして Gemini を開く
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM要素
+        const settingsBtn = document.getElementById('toggle-settings');
+        const settingsPanel = document.getElementById('settings-panel');
+        const settingsForm = document.getElementById('settings-form');
+        const calIdInput = document.getElementById('calendar-id');
+        const calIframe = document.getElementById('calendar-iframe');
+        const calStatusText = document.getElementById('cal-status-text');
+        const themeBtn = document.getElementById('toggle-theme');
+
+        const taskTitleInput = document.getElementById('task-title-input');
+        const sendToGeminiBtn = document.getElementById('send-to-gemini-btn');
+
+        // カレンダーID取得（初期値 st.omu.ac.jp アカウント）
+        let userCalId = localStorage.getItem('portal_cal_id') || 'rf24059q@st.omu.ac.jp';
+        calIdInput.value = userCalId;
+
+        // カレンダー表示更新
+        function updateCalendarIframe(email) {
+            if (!email) {
+                calStatusText.innerText = '※右上の設定からカレンダーIDを入力してください';
+                return;
+            }
+            const encodedEmail = encodeURIComponent(email);
+            const calUrl = `https://calendar.google.com/calendar/embed?src=${encodedEmail}&ctz=Asia%2FTokyo`;
+            calIframe.src = calUrl;
+            calStatusText.innerText = `表示中: ${email}`;
+        }
+
+        updateCalendarIframe(userCalId);
+
+        // テーマ切り替え
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            themeBtn.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+        });
+
+        // 設定パネル開閉
+        settingsBtn.addEventListener('click', () => settingsPanel.classList.toggle('active'));
+
+        // 設定保存
+        settingsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            userCalId = calIdInput.value.trim();
+            localStorage.setItem('portal_cal_id', userCalId);
+            updateCalendarIframe(userCalId);
+            alert('設定を保存しました！');
+            settingsPanel.classList.remove('active');
+        });
+
+        // Gemini 公式ウェブアプリへのコピー＆起動処理
+        sendToGeminiBtn.addEventListener('click', async () => {
+            const taskName = taskTitleInput.value.trim();
+            if (!taskName) {
+                alert('課題名を入力してください！');
+                return;
+            }
+
+            // Gemini に渡すプロンプトテンプレートを作成
+            const prompt = `あなたは大学の提出物・課題作成をサポートするプロのTA（ティーチングアシスタント）です。
+提出期限が近い以下の課題について、構成案・概要・ドラフト骨子を作成してください。
+
+【対象課題・テーマ】
+${taskName}
+
+【希望する出力フォーマット】
+1. 概要・ゴールの設定
+2. 全体構成案（序論・本論・結論）
+3. 執筆/作成の具体的なステップ
+4. 注意点・評価ポイント`;
+
+            try {
+                // クリップボードにプロンプトを自動コピー
+                await navigator.clipboard.writeText(prompt);
+                
+                // ボタンの表示を一時的に変更
+                const originalText = sendToGeminiBtn.innerHTML;
+                sendToGeminiBtn.innerHTML = '<i class="fa-solid fa-check"></i> コピー完了！起動中...';
+                
+                setTimeout(() => {
+                    sendToGeminiBtn.innerHTML = originalText;
+                }, 2000);
+
+            } catch (err) {
+                console.error('クリップボードコピー失敗:', err);
+            }
+
+            // 新しいタブで Gemini 公式サイトを開く
+            window.open('https://gemini.google.com/app', '_blank');
+        });
+    </script>
+</body>
+</html>

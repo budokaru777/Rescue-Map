@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学習・作業ポータル (Learning Portal)</title>
+    <title>学習・作業ポータル & AI アシスタント</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -47,7 +47,7 @@
 
         header {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -89,20 +89,23 @@
 
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
         }
 
+        /* リンクカード領域 */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.2rem;
         }
 
         .card {
             background-color: var(--card-bg);
             border-radius: 12px;
-            padding: 1.5rem;
+            padding: 1.2rem;
             text-decoration: none;
             color: var(--text-color);
             display: flex;
@@ -112,56 +115,54 @@
             text-align: center;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
             box-shadow: var(--shadow-hover);
         }
 
         .card-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
         }
 
         .card-title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
-            margin-bottom: 0.5rem;
         }
 
-        .card-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        /* サービス別アクセントカラー */
-        .card.classroom:hover { border-color: #0f9d58; }
         .card.classroom .card-icon { color: #0f9d58; }
-
-        .card.teams:hover { border-color: #6264a7; }
+        .card.calendar-card .card-icon { color: #4285f4; }
         .card.teams .card-icon { color: #6264a7; }
-
-        .card.moodle:hover { border-color: #f7931e; }
         .card.moodle .card-icon { color: #f7931e; }
 
-        .card.notion:hover { border-color: #000000; }
-        [data-theme="dark"] .card.notion:hover { border-color: #ffffff; }
-        .card.notion .card-icon { color: var(--text-color); }
-
-        /* カレンダーエリア */
-        .calendar-section {
-            margin-top: 2rem;
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
+        /* AI セクション */
+        .ai-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
         }
 
-        .calendar-section h2 {
+        @media (max-width: 768px) {
+            .ai-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ai-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            height: 480px;
+        }
+
+        .ai-card h2 {
             font-size: 1.2rem;
             margin-bottom: 1rem;
             display: flex;
@@ -169,49 +170,103 @@
             gap: 8px;
         }
 
-        .calendar-container {
-            width: 100%;
-            height: 550px;
+        /* チャットエリア */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+            background: var(--bg-color);
             border-radius: 8px;
-            overflow: hidden;
+            margin-bottom: 10px;
         }
 
-        .calendar-container iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
+        .message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
         }
 
-        /* 設定エリア */
+        .message.user {
+            align-self: flex-end;
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .chat-input-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-box input {
+            flex: 1;
+            padding: 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .btn-action {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-action:hover {
+            opacity: 0.9;
+        }
+
+        /* プロトタイプ作成エリア */
+        .prototype-output {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg-color);
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            border: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+
+        /* 設定パネル */
         .settings-panel {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1.5rem;
-            margin-top: 1.5rem;
             display: none;
             box-shadow: var(--shadow);
         }
 
-        .settings-panel.active {
-            display: block;
-        }
-
-        .settings-panel h2 {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-        }
+        .settings-panel.active { display: block; }
 
         .setting-item {
             display: flex;
             flex-direction: column;
             gap: 5px;
             margin-bottom: 1rem;
-        }
-
-        .setting-item label {
-            font-size: 0.9rem;
-            font-weight: 600;
         }
 
         .setting-item input {
@@ -221,238 +276,196 @@
             background: var(--bg-color);
             color: var(--text-color);
         }
-
-        .btn-save {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        footer {
-            margin-top: auto;
-            padding: 1rem;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1><i class="fa-solid fa-graduation-cap"></i> Portal Dashboard</h1>
+        <h1><i class="fa-solid fa-graduation-cap"></i> Portal & AI Workspace</h1>
         <div class="header-controls">
-            <button class="btn-icon" id="toggle-settings">
-                <i class="fa-solid fa-gear"></i> 設定
-            </button>
-            <button class="btn-icon" id="toggle-theme">
-                <i class="fa-solid fa-moon"></i>
-            </button>
+            <button class="btn-icon" id="toggle-settings"><i class="fa-solid fa-gear"></i> 設定</button>
+            <button class="btn-icon" id="toggle-theme"><i class="fa-solid fa-moon"></i></button>
         </div>
     </header>
 
     <div class="container">
-        <!-- リンクカード一覧 -->
+        <!-- リンクエリア -->
         <div class="grid">
-            <!-- Google Classroom -->
-            <a href="https://classroom.google.com" target="_blank" rel="noopener noreferrer" class="card classroom" id="link-classroom">
+            <a href="https://classroom.google.com" target="_blank" class="card classroom">
                 <i class="fa-solid fa-chalkboard-user card-icon"></i>
-                <div class="card-title">Google Classroom</div>
-                <div class="card-desc">課題の確認・提出、クラス連絡</div>
+                <div class="card-title">Classroom</div>
             </a>
-
-            <!-- Microsoft Teams -->
-            <a href="https://teams.microsoft.com" target="_blank" rel="noopener noreferrer" class="card teams" id="link-teams">
+            <a href="https://calendar.google.com" target="_blank" class="card calendar-card">
+                <i class="fa-solid fa-calendar-days card-icon"></i>
+                <div class="card-title">カレンダー</div>
+            </a>
+            <a href="https://teams.microsoft.com" target="_blank" class="card teams">
                 <i class="fa-solid fa-users card-icon"></i>
-                <div class="card-title">Microsoft Teams</div>
-                <div class="card-desc">チームチャット、オンライン授業</div>
+                <div class="card-title">Teams</div>
             </a>
-
-            <!-- Moodle -->
-            <a href="https://moodle.org" target="_blank" rel="noopener noreferrer" class="card moodle" id="link-moodle">
+            <a href="https://moodle.org" target="_blank" class="card moodle">
                 <i class="fa-solid fa-graduation-cap card-icon"></i>
                 <div class="card-title">Moodle</div>
-                <div class="card-desc">学習管理・教材・小テスト</div>
-            </a>
-
-            <!-- Notion -->
-            <a href="https://www.notion.so" target="_blank" rel="noopener noreferrer" class="card notion" id="link-notion">
-                <i class="fa-solid fa-book-open card-icon"></i>
-                <div class="card-title">Notion</div>
-                <div class="card-desc">ノート作成・タスク管理・Wiki</div>
             </a>
         </div>
 
-        <!-- カレンダー埋め込みエリア -->
-        <div class="calendar-section">
-            <h2><i class="fa-solid fa-calendar-days"></i> 課題・提出期限カレンダー</h2>
-            <div class="calendar-container">
-                <iframe id="calendar-iframe" src="about:blank" scrolling="no"></iframe>
+        <!-- AI アシスタント エリア -->
+        <div class="ai-layout">
+            <!-- 1. AI質問チャット -->
+            <div class="ai-card">
+                <h2><i class="fa-solid fa-robot" style="color: var(--primary-color);"></i> 学習相談 AI チャット</h2>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message ai">こんにちは！課題の質問や勉強の相談など、何でも聞いてくださいね。</div>
+                </div>
+                <div class="chat-input-box">
+                    <input type="text" id="chat-input" placeholder="質問を入力... (例: レポートの構成のコツは？)">
+                    <button class="btn-action" id="send-chat-btn"><i class="fa-solid fa-paper-plane"></i> 送信</button>
+                </div>
+            </div>
+
+            <!-- 2. 課題プロトタイプ生成器 -->
+            <div class="ai-card">
+                <h2><i class="fa-solid fa-wand-magic-sparkles" style="color: #f7931e;"></i> 課題プロトタイプ生成</h2>
+                <div class="prototype-output" id="prototype-output">
+                    下の入力欄に課題のタイトルや概要を入力するか、「サンプル課題で作成」を押すとAIが構成案（プロトタイプ）を作成します。
+                </div>
+                <div class="chat-input-box" style="flex-direction: column; gap: 8px;">
+                    <input type="text" id="task-input" placeholder="課題名・テーマを入力 (例: 憲法第9条についてのレポート)">
+                    <button class="btn-action" id="gen-prototype-btn" style="width: 100%; justify-content: center;">
+                        <i class="fa-solid fa-bolt"></i> プロトタイプ（骨子）を即座に自動生成
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- カスタム設定パネル -->
+        <!-- 設定パネル -->
         <div class="settings-panel" id="settings-panel">
-            <h2><i class="fa-solid fa-pen-to-square"></i> 設定（URL・カレンダー）</h2>
+            <h2><i class="fa-solid fa-key"></i> API 設定</h2>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                大学や学校専用のURLや、ClassroomのカレンダーIDを入力してください。（複数ある場合はカンマ `,` 区切りで入力可能です）
+                Gemini API Key を入力すると、ポータル上で直接 AI が利用できるようになります。
             </p>
-            <form id="url-form">
+            <form id="api-form">
                 <div class="setting-item">
-                    <label for="input-calendar-id">Google カレンダー ID（複数登録はカンマ区切り）</label>
-                    <input type="text" id="input-calendar-id" placeholder="c_xxxxx@group.calendar.google.com, yourname@st.omu.ac.jp">
+                    <label for="gemini-api-key">Gemini API Key</label>
+                    <input type="password" id="gemini-api-key" placeholder="AI Studioで発行したキーを貼り付け">
                 </div>
-                <div class="setting-item">
-                    <label for="input-classroom">Google Classroom URL</label>
-                    <input type="url" id="input-classroom" placeholder="https://classroom.google.com">
-                </div>
-                <div class="setting-item">
-                    <label for="input-teams">Microsoft Teams URL</label>
-                    <input type="url" id="input-teams" placeholder="https://teams.microsoft.com">
-                </div>
-                <div class="setting-item">
-                    <label for="input-moodle">Moodle URL</label>
-                    <input type="url" id="input-moodle" placeholder="https://your-school.moodle.com">
-                </div>
-                <div class="setting-item">
-                    <label for="input-notion">Notion URL</label>
-                    <input type="url" id="input-notion" placeholder="https://www.notion.so">
-                </div>
-                <button type="submit" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> 設定を保存</button>
+                <button type="submit" class="btn-action"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
             </form>
         </div>
     </div>
 
-    <footer>
-        &copy; Learning & Work Portal Dashboard
-    </footer>
-
     <script>
-        // DOM要素
-        const themeBtn = document.getElementById('toggle-theme');
+        // 設定読み込み
         const settingsBtn = document.getElementById('toggle-settings');
         const settingsPanel = document.getElementById('settings-panel');
-        const urlForm = document.getElementById('url-form');
-        const calendarIframe = document.getElementById('calendar-iframe');
+        const apiForm = document.getElementById('api-form');
+        const apiKeyInput = document.getElementById('gemini-api-key');
+        const themeBtn = document.getElementById('toggle-theme');
 
-        const links = {
-            classroom: document.getElementById('link-classroom'),
-            teams: document.getElementById('link-teams'),
-            moodle: document.getElementById('link-moodle'),
-            notion: document.getElementById('link-notion')
-        };
+        let geminiApiKey = localStorage.getItem('portal_gemini_key') || '';
+        if (geminiApiKey) apiKeyInput.value = geminiApiKey;
 
-        const inputs = {
-            classroom: document.getElementById('input-classroom'),
-            teams: document.getElementById('input-teams'),
-            moodle: document.getElementById('input-moodle'),
-            notion: document.getElementById('input-notion'),
-            calendarId: document.getElementById('input-calendar-id')
-        };
-
-        // ダークモード切替
+        // テーマ切替
         themeBtn.addEventListener('click', () => {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.body.setAttribute('data-theme', newTheme);
-            themeBtn.innerHTML = newTheme === 'dark' 
-                ? '<i class="fa-solid fa-sun"></i>' 
-                : '<i class="fa-solid fa-moon"></i>';
-            localStorage.setItem('portal_theme', newTheme);
+            themeBtn.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
         });
 
-        // 初期テーマ設定の読み込み
-        const savedTheme = localStorage.getItem('portal_theme');
-        if (savedTheme === 'dark') {
-            document.body.setAttribute('data-theme', 'dark');
-            themeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
-        }
+        // 設定パネル開閉
+        settingsBtn.addEventListener('click', () => settingsPanel.classList.toggle('active'));
 
-        // 設定パネルの表示切替
-        settingsBtn.addEventListener('click', () => {
-            settingsPanel.classList.toggle('active');
-        });
-
-        // URL & カレンダーID の設定保存 & 読み込み
-        function loadSettings() {
-            // URLの読み込み
-            Object.keys(links).forEach(key => {
-                const savedUrl = localStorage.getItem(`portal_url_${key}`);
-                if (savedUrl) {
-                    links[key].href = savedUrl;
-                    inputs[key].value = savedUrl;
-                } else {
-                    inputs[key].value = links[key].href;
-                }
-            });
-
-            // GoogleカレンダーIDの読み込み（初期値は日本の祝日カレンダー）
-            const savedCalendarId = localStorage.getItem('portal_calendar_id') || 'ja.japanese#holiday@group.v.calendar.google.com';
-            inputs.calendarId.value = savedCalendarId;
-            
-            // カレンダーの表示更新
-            updateCalendar(savedCalendarId);
-        }
-
-        // カレンダー表示ロジックの強化（複数ID対応 & 自動整形機能付き）
-        function updateCalendar(calendarInput) {
-            if (!calendarInput || !calendarInput.trim()) return;
-
-            // カンマ区切りで複数のIDを取得
-            const rawIds = calendarInput.split(',');
-            const validParams = [];
-
-            rawIds.forEach(item => {
-                let cleanId = item.trim();
-                
-                // もし誤って embed 用の URL 全体を貼り付けてしまった場合の救済処理
-                if (cleanId.includes('src=')) {
-                    const match = cleanId.match(/src=([^&]+)/);
-                    if (match && match[1]) {
-                        cleanId = decodeURIComponent(match[1]);
-                    }
-                }
-
-                if (cleanId) {
-                    validParams.push(`src=${encodeURIComponent(cleanId)}`);
-                }
-            });
-
-            if (validParams.length > 0) {
-                const srcQuery = validParams.join('&');
-                calendarIframe.src = `https://calendar.google.com/calendar/embed?${srcQuery}&ctz=Asia%2FTokyo`;
-            }
-        }
-
-        // フォーム送信時の処理
-        urlForm.addEventListener('submit', (e) => {
+        // API Key 保存
+        apiForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
-            // URL保存
-            Object.keys(links).forEach(key => {
-                const newUrl = inputs[key].value.trim();
-                if (newUrl) {
-                    links[key].href = newUrl;
-                    localStorage.setItem(`portal_url_${key}`, newUrl);
-                }
-            });
-
-            // カレンダーID保存
-            const newCalId = inputs.calendarId.value.trim();
-            if (newCalId) {
-                localStorage.setItem('portal_calendar_id', newCalId);
-                updateCalendar(newCalId);
-            }
-
-            alert('設定を保存しました！');
+            geminiApiKey = apiKeyInput.value.trim();
+            localStorage.setItem('portal_gemini_key', geminiApiKey);
+            alert('APIキーを保存しました！');
             settingsPanel.classList.remove('active');
         });
 
-        // 初期化実行
-        loadSettings();
+        // Gemini API 呼び出し関数
+        async function askGemini(prompt) {
+            if (!geminiApiKey) {
+                alert('右上の「設定」から Gemini API Key を設定してください！');
+                return null;
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (err) {
+                console.error(err);
+                return 'エラーが発生しました。APIキーまたはネットワークを確認してください。';
+            }
+        }
+
+        // 1. AIチャット機能
+        const chatInput = document.getElementById('chat-input');
+        const sendChatBtn = document.getElementById('send-chat-btn');
+        const chatMessages = document.getElementById('chat-messages');
+
+        async function handleChat() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            // ユーザーメッセージ表示
+            appendMessage(text, 'user');
+            chatInput.value = '';
+
+            // AI応答待ち
+            const loadingMsg = appendMessage('思考中...', 'ai');
+            const reply = await askGemini(`大学の学習アシスタントとして以下の質問に分かりやすく答えてください:\n${text}`);
+            loadingMsg.innerText = reply || '回答を取得できませんでした。';
+        }
+
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}`;
+            msgDiv.innerText = text;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return msgDiv;
+        }
+
+        sendChatBtn.addEventListener('click', handleChat);
+        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleChat(); });
+
+        // 2. プロトタイプ自動生成機能
+        const taskInput = document.getElementById('task-input');
+        const genPrototypeBtn = document.getElementById('gen-prototype-btn');
+        const prototypeOutput = document.getElementById('prototype-output');
+
+        genPrototypeBtn.addEventListener('click', async () => {
+            const taskName = taskInput.value.trim() || 'サンプル課題：大学での生成AI活用についてのレポート';
+            prototypeOutput.innerText = 'AIが課題の骨子・構成案（プロトタイプ）を作成中...';
+
+            const prompt = `
+あなたは大学の提出物・課題作成をサポートするプロのTA（ティーチングアシスタント）です。
+以下の課題・テーマについて、学生が迷わず着手できるように「構成案・アプローチ・ドラフトの骨子（プロトタイプ）」を作成してください。
+
+■ 課題テーマ/タイトル:
+${taskName}
+
+■ 出力フォーマット:
+1. 【概要・ゴール】(どのような完成形を目指すべきか)
+2. 【全体構成案】(序論・本論・結論 または ステップ1〜3)
+3. 【最初にやるべき3つのアクション】
+4. 【執筆・作成のヒント・注意点】
+`;
+
+            const res = await askGemini(prompt);
+            prototypeOutput.innerText = res || 'プロトタイプの生成に失敗しました。';
+        });
     </script>
 </body>
 </html>

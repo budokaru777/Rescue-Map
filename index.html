@@ -91,7 +91,7 @@
   <!-- Main Content Container -->
   <main class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 flex-grow w-full">
 
-    <!-- 0. ポータル（ショートカット & Gemini 連携） -->
+    <!-- 0. ポータル（ショートカット, Gemini 連携, 埋め込み Google カレンダー） -->
     <section id="section-portal" class="tab-content block space-y-4 md:space-y-6">
       
       <!-- ショートカットカード -->
@@ -127,6 +127,26 @@
           <button id="send-to-gemini-btn" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
             <i class="fa-solid fa-copy"></i> Geminiを起動
           </button>
+        </div>
+      </div>
+
+      <!-- 埋め込み Google カレンダー (設定機能つき) -->
+      <div class="bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-calendar-check text-blue-600"></i> Google カレンダー埋め込み表示
+          </h2>
+          <span id="cal-status-text" class="text-xs text-slate-500"></span>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label for="calendar-id" class="text-xs font-bold text-slate-600 whitespace-nowrap">カレンダーID (メールアドレス):</label>
+          <input type="email" id="calendar-id" placeholder="rf24059q@st.omu.ac.jp" class="flex-1 border border-slate-300 rounded px-3 py-1 text-xs outline-none bg-white">
+          <button onclick="saveCalendarSettings()" class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-slate-700 whitespace-nowrap">保存</button>
+        </div>
+
+        <div class="w-full h-[350px] md:h-[450px] border border-slate-200 rounded-lg overflow-hidden">
+          <iframe id="calendar-iframe" src="about:blank" class="w-full h-full border-none"></iframe>
         </div>
       </div>
 
@@ -442,9 +462,37 @@
       updateUserDisplayName();
       renderTasks();
       initGeminiLauncher();
+      initEmbedCalendar();
       initFirebaseListeners();
       initCalendar();
     });
+
+    /* --- Google 埋め込みカレンダー管理 --- */
+    function initEmbedCalendar() {
+      const calIdInput = document.getElementById('calendar-id');
+      const userCalId = localStorage.getItem('portal_cal_id') || 'rf24059q@st.omu.ac.jp';
+      calIdInput.value = userCalId;
+      updateCalendarIframe(userCalId);
+    }
+
+    function updateCalendarIframe(email) {
+      const calIframe = document.getElementById('calendar-iframe');
+      const calStatusText = document.getElementById('cal-status-text');
+      if (!email) {
+        calStatusText.innerText = '※カレンダーIDを入力してください';
+        return;
+      }
+      const encodedEmail = encodeURIComponent(email);
+      calIframe.src = `https://calendar.google.com/calendar/embed?src=${encodedEmail}&ctz=Asia%2FTokyo`;
+      calStatusText.innerText = `表示中: ${email}`;
+    }
+
+    function saveCalendarSettings() {
+      const email = document.getElementById('calendar-id').value.trim();
+      localStorage.setItem('portal_cal_id', email);
+      updateCalendarIframe(email);
+      alert('カレンダーIDを保存しました');
+    }
 
     /* --- ユーザー名管理 --- */
     function updateUserDisplayName() {

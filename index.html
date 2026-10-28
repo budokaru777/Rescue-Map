@@ -12,11 +12,6 @@
   <!-- FullCalendar -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
-  <!-- Firebase JavaScript SDK (v9/v10 Compat Mode) -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
   <style>
     .fc-event { cursor: pointer; border-radius: 4px; padding: 2px 4px; font-size: 0.8rem; }
     .status-border-todo { border-left: 4px solid #ef4444; }
@@ -53,26 +48,26 @@
 
       <!-- Navigation Tabs (PC) -->
       <nav class="flex space-x-1 bg-slate-100 p-1 rounded-lg text-sm font-medium border border-slate-200">
-        <button onclick="switchTab('portal')" id="tab-portal-pc" class="tab-btn px-3 py-1.5 rounded-md bg-white text-slate-900 font-bold shadow-sm">
+        <button id="tab-portal-pc" class="tab-btn px-3 py-1.5 rounded-md bg-white text-slate-900 font-bold shadow-sm">
           <i class="fa-solid fa-house mr-1.5"></i>ポータル
         </button>
-        <button onclick="switchTab('board')" id="tab-board-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
+        <button id="tab-board-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
           <i class="fa-solid fa-chalkboard mr-1.5"></i>黒板掲示板
         </button>
-        <button onclick="switchTab('chat')" id="tab-chat-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
+        <button id="tab-chat-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
           <i class="fa-solid fa-comments mr-1.5"></i>クラスチャット
         </button>
-        <button onclick="switchTab('tasks')" id="tab-tasks-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
+        <button id="tab-tasks-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
           <i class="fa-solid fa-list-check mr-1.5"></i>個人課題
         </button>
-        <button onclick="switchTab('calendar')" id="tab-calendar-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
+        <button id="tab-calendar-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
           <i class="fa-regular fa-calendar-days mr-1.5"></i>共有カレンダー
         </button>
       </nav>
 
       <div class="flex items-center gap-2">
         <span id="user-display-name-pc" class="text-xs text-slate-500 font-bold"></span>
-        <button onclick="openNameModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-1.5 rounded-lg border">名前変更</button>
+        <button id="btn-open-name-modal-pc" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-1.5 rounded-lg border">名前変更</button>
       </div>
     </div>
   </header>
@@ -83,7 +78,7 @@
       <i class="fa-solid fa-graduation-cap text-xl text-slate-800"></i>
       <span class="font-bold text-base tracking-tight" id="mobile-header-title">ポータル</span>
     </div>
-    <button onclick="openNameModal()" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md border text-slate-700 flex items-center gap-1">
+    <button id="btn-open-name-modal-mb" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md border text-slate-700 flex items-center gap-1">
       <i class="fa-solid fa-user"></i> <span id="user-display-name-mb">名前設定</span>
     </button>
   </header>
@@ -142,7 +137,7 @@
         <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
           <label for="calendar-id" class="text-xs font-bold text-slate-600 whitespace-nowrap">カレンダーID (メールアドレス):</label>
           <input type="email" id="calendar-id" placeholder="rf24059q@st.omu.ac.jp" class="flex-1 border border-slate-300 rounded px-3 py-1 text-xs outline-none bg-white">
-          <button onclick="saveCalendarSettings()" class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-slate-700 whitespace-nowrap">保存</button>
+          <button id="btn-save-calendar-settings" class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-slate-700 whitespace-nowrap">保存</button>
         </div>
 
         <div class="w-full h-[350px] md:h-[450px] border border-slate-200 rounded-lg overflow-hidden">
@@ -159,7 +154,7 @@
           <h2 class="font-bold text-slate-900 text-sm md:text-base">クラス黒板掲示板</h2>
           <p class="text-xs text-slate-500">小テストや提出課題の日時を全員で共有できます</p>
         </div>
-        <button onclick="openBoardModal()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5">
+        <button id="btn-open-board-modal" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5">
           <i class="fa-solid fa-plus"></i> 連絡を投稿
         </button>
       </div>
@@ -188,7 +183,7 @@
             <i class="fa-solid fa-comments text-indigo-600"></i>
             <span class="font-bold text-sm md:text-base text-slate-800">クラスチャット</span>
           </div>
-          <span class="text-xs text-slate-500" id="chat-user-count">匿名オンライン</span>
+          <span class="text-xs text-slate-500" id="chat-user-count">リアルタイム同期中</span>
         </div>
 
         <!-- Chat Messages Area -->
@@ -197,7 +192,7 @@
         </div>
 
         <!-- Chat Input Form -->
-        <form onsubmit="sendChatMessage(event)" class="p-2 md:p-3 bg-white border-t border-slate-200 flex gap-2 rounded-b-xl">
+        <form id="chat-form" class="p-2 md:p-3 bg-white border-t border-slate-200 flex gap-2 rounded-b-xl">
           <input type="text" id="chat-input" placeholder="メッセージを入力..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-400">
           <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-1">
             <i class="fa-solid fa-paper-plane"></i>
@@ -210,8 +205,8 @@
     <section id="section-tasks" class="tab-content hidden space-y-4">
       <div class="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-center justify-between">
         <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
-          <input type="text" id="searchQuery" oninput="renderTasks()" placeholder="検索..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs md:text-sm outline-none w-full md:w-48">
-          <select id="filterSubject" onchange="renderTasks()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white">
+          <input type="text" id="searchQuery" placeholder="検索..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs md:text-sm outline-none w-full md:w-48">
+          <select id="filterSubject" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white">
             <option value="ALL">全教科</option>
             <option value="数学">数学</option>
             <option value="英語">英語</option>
@@ -224,10 +219,10 @@
 
         <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
           <div class="flex items-center gap-1">
-            <button onclick="setViewMode('kanban')" id="btn-kanban" class="px-2.5 py-1 rounded-lg border text-xs bg-slate-100 font-bold">カンバン</button>
-            <button onclick="setViewMode('list')" id="btn-list" class="px-2.5 py-1 rounded-lg border text-xs bg-white text-slate-600">リスト</button>
+            <button id="btn-kanban" class="px-2.5 py-1 rounded-lg border text-xs bg-slate-100 font-bold">カンバン</button>
+            <button id="btn-list" class="px-2.5 py-1 rounded-lg border text-xs bg-white text-slate-600">リスト</button>
           </div>
-          <button onclick="openModal()" class="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1">
+          <button id="btn-open-task-modal" class="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1">
             <i class="fa-solid fa-plus"></i> 追加
           </button>
         </div>
@@ -300,23 +295,23 @@
 
   <!-- Mobile Bottom Navigation (スマホ専用ボトムバー) -->
   <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-1.5 z-40 flex justify-around items-center shadow-lg">
-    <button onclick="switchTab('portal')" id="tab-portal-mb" class="flex flex-col items-center gap-0.5 text-slate-900 font-bold">
+    <button id="tab-portal-mb" class="flex flex-col items-center gap-0.5 text-slate-900 font-bold">
       <i class="fa-solid fa-house text-lg"></i>
       <span class="text-[10px]">ポータル</span>
     </button>
-    <button onclick="switchTab('board')" id="tab-board-mb" class="flex flex-col items-center gap-0.5 text-slate-500">
+    <button id="tab-board-mb" class="flex flex-col items-center gap-0.5 text-slate-500">
       <i class="fa-solid fa-chalkboard text-lg"></i>
       <span class="text-[10px]">黒板掲示</span>
     </button>
-    <button onclick="switchTab('chat')" id="tab-chat-mb" class="flex flex-col items-center gap-0.5 text-slate-500 relative">
+    <button id="tab-chat-mb" class="flex flex-col items-center gap-0.5 text-slate-500 relative">
       <i class="fa-solid fa-comments text-lg"></i>
       <span class="text-[10px]">チャット</span>
     </button>
-    <button onclick="switchTab('tasks')" id="tab-tasks-mb" class="flex flex-col items-center gap-0.5 text-slate-500">
+    <button id="tab-tasks-mb" class="flex flex-col items-center gap-0.5 text-slate-500">
       <i class="fa-solid fa-list-check text-lg"></i>
       <span class="text-[10px]">課題</span>
     </button>
-    <button onclick="switchTab('calendar')" id="tab-calendar-mb" class="flex flex-col items-center gap-0.5 text-slate-500">
+    <button id="tab-calendar-mb" class="flex flex-col items-center gap-0.5 text-slate-500">
       <i class="fa-regular fa-calendar-days text-lg"></i>
       <span class="text-[10px]">カレンダー</span>
     </button>
@@ -327,10 +322,10 @@
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
       <div class="bg-slate-900 px-4 py-3 text-white flex justify-between items-center">
         <h3 id="modalTitle" class="font-bold text-sm">課題の追加</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        <button id="btn-close-task-modal" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <form id="taskForm" onsubmit="saveTask(event)" class="p-4 space-y-3">
+      <form id="taskForm" class="p-4 space-y-3">
         <input type="hidden" id="taskId">
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-1">タイトル *</label>
@@ -366,7 +361,7 @@
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t">
-          <button type="button" onclick="closeModal()" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
+          <button type="button" id="btn-cancel-task-modal" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
           <button type="submit" class="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold">保存</button>
         </div>
       </form>
@@ -378,10 +373,10 @@
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
       <div class="bg-emerald-900 px-4 py-3 text-white flex justify-between items-center">
         <h3 class="font-bold text-sm">黒板に小テスト・プリント告知を投稿</h3>
-        <button onclick="closeBoardModal()" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        <button id="btn-close-board-modal" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <form onsubmit="saveBoardItem(event)" class="p-4 space-y-3">
+      <form id="boardForm" class="p-4 space-y-3">
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-1">種別</label>
           <select id="boardType" class="w-full border p-2 rounded-lg text-xs outline-none bg-white">
@@ -407,7 +402,7 @@
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t">
-          <button type="button" onclick="closeBoardModal()" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
+          <button type="button" id="btn-cancel-board-modal" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
           <button type="submit" class="px-3 py-1.5 bg-emerald-800 text-white rounded-lg text-xs font-bold">黒板に書き込む</button>
         </div>
       </form>
@@ -420,27 +415,39 @@
       <h3 class="font-bold text-sm text-slate-800">表示名の設定</h3>
       <input type="text" id="userNameInput" placeholder="例: 山田太郎" class="w-full border p-2 rounded-lg text-xs outline-none">
       <div class="flex justify-end gap-2">
-        <button onclick="saveUserName()" class="w-full py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold">決定</button>
+        <button id="btn-save-username" class="w-full py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold">決定</button>
       </div>
     </div>
   </div>
 
-  <script>
-    /* --- Firebase Config (共有データベース) --- */
+  <!-- Firebase v9 (Modular SDK) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      query, 
+      orderBy, 
+      limit, 
+      onSnapshot, 
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Firebase Configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyDemoKeyForPublicApp1234567",
-      authDomain: "edutask-demo.firebaseapp.com",
-      projectId: "edutask-demo",
-      storageBucket: "edutask-demo.appspot.com",
-      messagingSenderId: "1234567890",
-      appId: "1:1234567890:web:demo123456789"
+      apiKey: "AIzaSyDgjxiw-m0Vgk1X-yWRKrGsjXTAS4ZpDAM",
+      authDomain: "telephone-99ed5.firebaseapp.com",
+      projectId: "telephone-99ed5",
+      storageBucket: "telephone-99ed5.firebasestorage.app",
+      messagingSenderId: "609918192167",
+      appId: "1:609918192167:web:4361772de1f08b029edc02",
+      measurementId: "G-VBNN97R90E"
     };
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.firestore();
-    db.settings({ experimentalForceLongPolling: true });
+    // Initialize Firebase & Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
     /* --- アプリ状態管理 --- */
     let userName = localStorage.getItem('edutask_username') || ('生徒' + Math.floor(Math.random() * 899 + 100));
@@ -451,11 +458,11 @@
     let calendarInstance = null;
 
     const statusConfig = {
-      todo: { label: '未着手', bg: 'bg-red-50 text-red-700', borderClass: 'status-border-todo', hex: '#ef4444' },
-      doing: { label: '進行中', bg: 'bg-amber-50 text-amber-700', borderClass: 'status-border-doing', hex: '#f59e0b' },
-      submitted: { label: '提出済み', bg: 'bg-blue-50 text-blue-700', borderClass: 'status-border-submitted', hex: '#3b82f6' },
-      done: { label: '完了', bg: 'bg-emerald-50 text-emerald-700', borderClass: 'status-border-done', hex: '#10b981' },
-      overdue: { label: '期限超過', bg: 'bg-purple-50 text-purple-700', borderClass: 'status-border-overdue', hex: '#8b5cf6' }
+      todo: { label: '未着手', bg: 'bg-red-50 text-red-700', borderClass: 'status-border-todo' },
+      doing: { label: '進行中', bg: 'bg-amber-50 text-amber-700', borderClass: 'status-border-doing' },
+      submitted: { label: '提出済み', bg: 'bg-blue-50 text-blue-700', borderClass: 'status-border-submitted' },
+      done: { label: '完了', bg: 'bg-emerald-50 text-emerald-700', borderClass: 'status-border-done' },
+      overdue: { label: '期限超過', bg: 'bg-purple-50 text-purple-700', borderClass: 'status-border-overdue' }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -465,13 +472,53 @@
       initEmbedCalendar();
       initFirebaseListeners();
       initCalendar();
+      setupEventListeners();
     });
+
+    /* --- イベントリスナーの一括設定 --- */
+    function setupEventListeners() {
+      // タブ切り替えイベント設定
+      const tabs = ['portal', 'board', 'chat', 'tasks', 'calendar'];
+      tabs.forEach(tab => {
+        document.getElementById(`tab-${tab}-pc`)?.addEventListener('click', () => switchTab(tab));
+        document.getElementById(`tab-${tab}-mb`)?.addEventListener('click', () => switchTab(tab));
+      });
+
+      // ユーザー名変更モーダル
+      document.getElementById('btn-open-name-modal-pc')?.addEventListener('click', openNameModal);
+      document.getElementById('btn-open-name-modal-mb')?.addEventListener('click', openNameModal);
+      document.getElementById('btn-save-username')?.addEventListener('click', saveUserName);
+
+      // カレンダーID保存
+      document.getElementById('btn-save-calendar-settings')?.addEventListener('click', saveCalendarSettings);
+
+      // 黒板掲示モーダル
+      document.getElementById('btn-open-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
+      document.getElementById('btn-close-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
+      document.getElementById('btn-cancel-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
+      document.getElementById('boardForm')?.addEventListener('submit', saveBoardItem);
+
+      // チャット送信
+      document.getElementById('chat-form')?.addEventListener('submit', sendChatMessage);
+
+      // 課題管理モーダル＆表示切り替え
+      document.getElementById('btn-open-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.remove('hidden'));
+      document.getElementById('btn-close-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
+      document.getElementById('btn-cancel-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
+      document.getElementById('taskForm')?.addEventListener('submit', saveTask);
+
+      document.getElementById('btn-kanban')?.addEventListener('click', () => setViewMode('kanban'));
+      document.getElementById('btn-list')?.addEventListener('click', () => setViewMode('list'));
+
+      document.getElementById('searchQuery')?.addEventListener('input', renderTasks);
+      document.getElementById('filterSubject')?.addEventListener('change', renderTasks);
+    }
 
     /* --- Google 埋め込みカレンダー管理 --- */
     function initEmbedCalendar() {
       const calIdInput = document.getElementById('calendar-id');
       const userCalId = localStorage.getItem('portal_cal_id') || 'rf24059q@st.omu.ac.jp';
-      calIdInput.value = userCalId;
+      if (calIdInput) calIdInput.value = userCalId;
       updateCalendarIframe(userCalId);
     }
 
@@ -479,12 +526,12 @@
       const calIframe = document.getElementById('calendar-iframe');
       const calStatusText = document.getElementById('cal-status-text');
       if (!email) {
-        calStatusText.innerText = '※カレンダーIDを入力してください';
+        if (calStatusText) calStatusText.innerText = '※カレンダーIDを入力してください';
         return;
       }
       const encodedEmail = encodeURIComponent(email);
-      calIframe.src = `https://calendar.google.com/calendar/embed?src=${encodedEmail}&ctz=Asia%2FTokyo`;
-      calStatusText.innerText = `表示中: ${email}`;
+      if (calIframe) calIframe.src = `https://calendar.google.com/calendar/embed?src=${encodedEmail}&ctz=Asia%2FTokyo`;
+      if (calStatusText) calStatusText.innerText = `表示中: ${email}`;
     }
 
     function saveCalendarSettings() {
@@ -500,10 +547,12 @@
       document.getElementById('user-display-name-pc').innerText = userName;
       document.getElementById('user-display-name-mb').innerText = userName;
     }
+
     function openNameModal() {
       document.getElementById('userNameInput').value = userName;
       document.getElementById('modalName').classList.remove('hidden');
     }
+
     function saveUserName() {
       const val = document.getElementById('userNameInput').value.trim();
       if (val) {
@@ -517,7 +566,6 @@
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       
-      // PC タブのスタイル更新
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('bg-white', 'text-slate-900', 'font-bold', 'shadow-sm');
         btn.classList.add('text-slate-600');
@@ -528,7 +576,6 @@
         pcTab.classList.remove('text-slate-600');
       }
 
-      // スマホ タブのスタイル更新
       const mobileNavBtns = document.querySelectorAll('nav.md\\:hidden button');
       mobileNavBtns.forEach(btn => btn.className = 'flex flex-col items-center gap-0.5 text-slate-500');
       const mbTab = document.getElementById(`tab-${tabName}-mb`);
@@ -536,7 +583,6 @@
         mbTab.className = 'flex flex-col items-center gap-0.5 text-slate-900 font-bold';
       }
 
-      // スマホのタイトル更新
       const titles = { portal: 'ポータル', board: '黒板掲示板', chat: 'クラスチャット', tasks: '個人課題管理', calendar: '共有カレンダー' };
       document.getElementById('mobile-header-title').innerText = titles[tabName] || 'ポータル';
 
@@ -549,7 +595,7 @@
 
     /* --- Gemini AI アシスタント --- */
     function initGeminiLauncher() {
-      document.getElementById('send-to-gemini-btn').addEventListener('click', async () => {
+      document.getElementById('send-to-gemini-btn')?.addEventListener('click', async () => {
         const input = document.getElementById('task-title-input').value.trim();
         if (!input) return alert('課題名を入力してください！');
 
@@ -565,88 +611,95 @@
     /* --- Firebase リアルタイム同期（チャット & 黒板） --- */
     function initFirebaseListeners() {
       // 1. チャット受信
-      db.collection('chats').orderBy('timestamp', 'asc').limit(50)
-        .onSnapshot(snapshot => {
-          const container = document.getElementById('chat-messages-container');
-          container.innerHTML = '';
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            const isMe = data.sender === userName;
-            const div = document.createElement('div');
-            div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-            div.innerHTML = `
-              <span class="text-[10px] text-slate-400 px-1">${data.sender || '匿名'}</span>
-              <div class="px-3 py-2 rounded-xl text-xs max-w-[80%] ${isMe ? 'bg-slate-900 text-white rounded-br-none' : 'bg-white border text-slate-800 rounded-bl-none shadow-sm'}">
-                ${escapeHtml(data.message)}
-              </div>
-            `;
-            container.appendChild(div);
-          });
-          container.scrollTop = container.scrollHeight;
+      const chatQuery = query(collection(db, "chats"), orderBy("timestamp", "asc"), limit(50));
+      onSnapshot(chatQuery, (snapshot) => {
+        const container = document.getElementById('chat-messages-container');
+        if (!container) return;
+        container.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const isMe = data.sender === userName;
+          const div = document.createElement('div');
+          div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+          div.innerHTML = `
+            <span class="text-[10px] text-slate-400 px-1">${escapeHtml(data.sender || '匿名')}</span>
+            <div class="px-3 py-2 rounded-xl text-xs max-w-[80%] ${isMe ? 'bg-slate-900 text-white rounded-br-none' : 'bg-white border text-slate-800 rounded-bl-none shadow-sm'}">
+              ${escapeHtml(data.message)}
+            </div>
+          `;
+          container.appendChild(div);
         });
+        container.scrollTop = container.scrollHeight;
+      });
 
       // 2. 黒板掲示板受信
-      db.collection('board_items').orderBy('date', 'asc')
-        .onSnapshot(snapshot => {
-          boardItems = [];
-          const container = document.getElementById('board-items-container');
-          container.innerHTML = '';
-          if (snapshot.empty) {
-            container.innerHTML = `<div class="col-span-full text-center chalk-text-white py-8 text-xs">現在、黒板の連絡事項はありません。</div>`;
-            return;
-          }
-          snapshot.forEach(doc => {
-            const item = { id: doc.id, ...doc.data() };
-            boardItems.push(item);
+      const boardQuery = query(collection(db, "board_items"), orderBy("date", "asc"));
+      onSnapshot(boardQuery, (snapshot) => {
+        boardItems = [];
+        const container = document.getElementById('board-items-container');
+        if (!container) return;
+        container.innerHTML = '';
+        if (snapshot.empty) {
+          container.innerHTML = `<div class="col-span-full text-center chalk-text-white py-8 text-xs">現在、黒板の連絡事項はありません。</div>`;
+          return;
+        }
+        snapshot.forEach((doc) => {
+          const item = { id: doc.id, ...doc.data() };
+          boardItems.push(item);
 
-            const card = document.createElement('div');
-            card.className = "bg-amber-950/40 border border-amber-600/40 p-3 rounded-xl relative space-y-1.5";
-            card.innerHTML = `
-              <div class="flex justify-between items-start">
-                <span class="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/20 chalk-text-yellow border border-amber-500/40">${escapeHtml(item.type)}</span>
-                <span class="text-[10px] chalk-text-white opacity-70">${item.date ? item.date.replace('T', ' ') : ''}</span>
-              </div>
-              <h4 class="font-bold text-sm chalk-text-white">${escapeHtml(item.title)}</h4>
-              <p class="text-xs chalk-text-white opacity-90 leading-relaxed">${escapeHtml(item.content || '')}</p>
-              <div class="text-[10px] chalk-text-white opacity-60 pt-1 text-right">投稿: ${escapeHtml(item.author || '匿名')}</div>
-            `;
-            container.appendChild(card);
-          });
-          if (calendarInstance) updateCalendarEvents();
+          const card = document.createElement('div');
+          card.className = "bg-amber-950/40 border border-amber-600/40 p-3 rounded-xl relative space-y-1.5";
+          card.innerHTML = `
+            <div class="flex justify-between items-start">
+              <span class="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/20 chalk-text-yellow border border-amber-500/40">${escapeHtml(item.type)}</span>
+              <span class="text-[10px] chalk-text-white opacity-70">${item.date ? item.date.replace('T', ' ') : ''}</span>
+            </div>
+            <h4 class="font-bold text-sm chalk-text-white">${escapeHtml(item.title)}</h4>
+            <p class="text-xs chalk-text-white opacity-90 leading-relaxed">${escapeHtml(item.content || '')}</p>
+            <div class="text-[10px] chalk-text-white opacity-60 pt-1 text-right">投稿: ${escapeHtml(item.author || '匿名')}</div>
+          `;
+          container.appendChild(card);
         });
+        if (calendarInstance) updateCalendarEvents();
+      });
     }
 
-    function sendChatMessage(e) {
+    async function sendChatMessage(e) {
       e.preventDefault();
       const input = document.getElementById('chat-input');
       const msg = input.value.trim();
       if (!msg) return;
 
-      db.collection('chats').add({
-        sender: userName,
-        message: msg,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      input.value = '';
+      try {
+        await addDoc(collection(db, "chats"), {
+          sender: userName,
+          message: msg,
+          timestamp: serverTimestamp()
+        });
+        input.value = '';
+      } catch (err) {
+        console.error("チャット送信エラー:", err);
+      }
     }
 
-    /* --- 黒板掲示板モーダル --- */
-    function openBoardModal() { document.getElementById('modalBoard').classList.remove('hidden'); }
-    function closeBoardModal() { document.getElementById('modalBoard').classList.add('hidden'); }
-    function saveBoardItem(e) {
+    async function saveBoardItem(e) {
       e.preventDefault();
       const type = document.getElementById('boardType').value;
       const title = document.getElementById('boardTitle').value;
       const date = document.getElementById('boardDate').value;
       const content = document.getElementById('boardContent').value;
 
-      db.collection('board_items').add({
-        type, title, date, content,
-        author: userName,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      closeBoardModal();
+      try {
+        await addDoc(collection(db, "board_items"), {
+          type, title, date, content,
+          author: userName,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById('modalBoard').classList.add('hidden');
+        document.getElementById('boardForm').reset();
+      } catch (err) {
+        console.error("掲示投稿エラー:", err);
+      }
     }
 
     /* --- 個人課題管理 --- */
@@ -659,6 +712,7 @@
         document.getElementById('view-list').classList.remove('hidden');
       }
     }
+
     function renderTasks() {
       localStorage.setItem('edutask_tasks_v2', JSON.stringify(tasks));
       ['todo', 'doing', 'submitted', 'done'].forEach(s => {
@@ -681,17 +735,21 @@
           <div class="font-bold text-slate-800">${escapeHtml(task.title)}</div>
           <div class="text-[10px] text-slate-400"><i class="fa-regular fa-clock"></i> ${(task.dueDate||'').replace('T',' ')}</div>
           <div class="flex justify-end gap-2 pt-1 border-t text-[10px]">
-            <button onclick="deleteTask('${task.id}')" class="text-red-500">削除</button>
+            <button class="btn-delete-task text-red-500" data-id="${task.id}">削除</button>
           </div>
         `;
         const container = document.getElementById(`container-${task.status}`);
         if (container) container.appendChild(card);
       });
 
+      // 削除ボタンイベントバインド
+      document.querySelectorAll('.btn-delete-task').forEach(btn => {
+        btn.addEventListener('click', (e) => deleteTask(e.target.getAttribute('data-id')));
+      });
+
       if (calendarInstance) updateCalendarEvents();
     }
-    function openModal() { document.getElementById('modalTask').classList.remove('hidden'); }
-    function closeModal() { document.getElementById('modalTask').classList.add('hidden'); }
+
     function saveTask(e) {
       e.preventDefault();
       tasks.push({
@@ -702,8 +760,10 @@
         dueDate: document.getElementById('taskDueDate').value
       });
       renderTasks();
-      closeModal();
+      document.getElementById('modalTask').classList.add('hidden');
+      document.getElementById('taskForm').reset();
     }
+
     function deleteTask(id) {
       tasks = tasks.filter(t => t.id !== id);
       renderTasks();
@@ -725,7 +785,6 @@
 
     function getCalendarEvents() {
       const events = [];
-      // 1. 黒板掲示板の全ユーザー共有イベント
       boardItems.forEach(b => {
         if (b.date) {
           events.push({
@@ -736,7 +795,6 @@
           });
         }
       });
-      // 2. 個人課題のイベント
       tasks.forEach(t => {
         if (t.dueDate) {
           events.push({

@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <!-- FullCalendar -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     .fc-event { cursor: pointer; border-radius: 4px; padding: 2px 4px; font-size: 0.8rem; }
@@ -66,21 +68,32 @@
       </nav>
 
       <div class="flex items-center gap-2">
-        <span id="user-display-name-pc" class="text-xs text-slate-500 font-bold"></span>
-        <button id="btn-open-name-modal-pc" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-1.5 rounded-lg border">名前変更</button>
+        <!-- 常時表示される黒板投稿ボタン (PC) -->
+        <button id="btn-header-board-pc" class="bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm transition">
+          <i class="fa-solid fa-chalkboard-user"></i> 黒板に投稿
+        </button>
+        <span id="user-display-name-pc" class="text-xs text-slate-500 font-bold ml-1"></span>
+        <button id="btn-open-name-modal-pc" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1.5 rounded-lg border">名前変更</button>
       </div>
     </div>
   </header>
 
   <!-- Mobile Top Header (スマホ表示用) -->
-  <header class="bg-white text-slate-900 border-b border-slate-200 px-4 py-3 sticky top-0 z-30 flex justify-between items-center md:hidden shadow-sm">
+  <header class="bg-white text-slate-900 border-b border-slate-200 px-3 py-2.5 sticky top-0 z-30 flex justify-between items-center md:hidden shadow-sm">
     <div class="flex items-center gap-2">
-      <i class="fa-solid fa-graduation-cap text-xl text-slate-800"></i>
-      <span class="font-bold text-base tracking-tight" id="mobile-header-title">ポータル</span>
+      <i class="fa-solid fa-graduation-cap text-lg text-slate-800"></i>
+      <span class="font-bold text-sm tracking-tight" id="mobile-header-title">ポータル</span>
     </div>
-    <button id="btn-open-name-modal-mb" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md border text-slate-700 flex items-center gap-1">
-      <i class="fa-solid fa-user"></i> <span id="user-display-name-mb">名前設定</span>
-    </button>
+    
+    <div class="flex items-center gap-1.5">
+      <!-- 常時表示される黒板投稿ボタン (スマホ) -->
+      <button id="btn-header-board-mb" class="bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
+        <i class="fa-solid fa-plus"></i> 黒板投稿
+      </button>
+      <button id="btn-open-name-modal-mb" class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md border text-slate-700 flex items-center gap-1">
+        <i class="fa-solid fa-user"></i> <span id="user-display-name-mb">名前</span>
+      </button>
+    </div>
   </header>
 
   <!-- Main Content Container -->
@@ -125,7 +138,7 @@
         </div>
       </div>
 
-      <!-- 埋め込み Google カレンダー (設定機能つき) -->
+      <!-- 埋め込み Google カレンダー -->
       <div class="bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
@@ -147,15 +160,15 @@
 
     </section>
 
-    <!-- 1. クラスの黒板掲示板（小テスト・プリント告知） -->
+    <!-- 1. クラスの黒板掲示板（すべての連絡・予定共有） -->
     <section id="section-board" class="tab-content hidden space-y-4">
       <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200">
         <div>
           <h2 class="font-bold text-slate-900 text-sm md:text-base">クラス黒板掲示板</h2>
-          <p class="text-xs text-slate-500">小テストや提出課題の日時を全員で共有できます</p>
+          <p class="text-xs text-slate-500">小テスト・課題締切・行事・授業変更など全連絡をリアルタイム共有</p>
         </div>
-        <button id="btn-open-board-modal" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5">
-          <i class="fa-solid fa-plus"></i> 連絡を投稿
+        <button id="btn-open-board-modal" class="bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-plus"></i> 掲示板に投稿
         </button>
       </div>
 
@@ -163,7 +176,7 @@
       <div class="blackboard p-4 md:p-6 rounded-2xl min-h-[400px]">
         <div class="flex items-center justify-between border-b border-amber-700/60 pb-3 mb-4">
           <span class="chalk-text-yellow font-bold text-base md:text-lg flex items-center gap-2">
-            <i class="fa-solid fa-thumbtack"></i> 連絡事項・小テスト予定
+            <i class="fa-solid fa-thumbtack"></i> 連絡事項・行事・小テスト一覧
           </span>
           <span class="text-xs chalk-text-white opacity-80">リアルタイム同期中</span>
         </div>
@@ -201,7 +214,7 @@
       </div>
     </section>
 
-    <!-- 3. 個人課題管理（カンバン＆リスト） -->
+    <!-- 3. 個人課題管理 & 進捗レポートグラフ -->
     <section id="section-tasks" class="tab-content hidden space-y-4">
       <div class="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-center justify-between">
         <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
@@ -277,6 +290,23 @@
           </thead>
           <tbody id="list-table-body" class="divide-y divide-slate-100"></tbody>
         </table>
+      </div>
+
+      <!-- 課題進捗統計グラフエリア (復活機能) -->
+      <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-indigo-600"></i> 課題の進捗レポート & 負荷分析
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          <div class="flex flex-col items-center">
+            <span class="text-xs font-bold text-slate-500 mb-2">ステータス分布</span>
+            <div class="w-48 h-48 md:w-56 md:h-56"><canvas id="chart-status"></canvas></div>
+          </div>
+          <div class="flex flex-col items-center">
+            <span class="text-xs font-bold text-slate-500 mb-2">教科別 課題数</span>
+            <div class="w-full h-48 md:h-56"><canvas id="chart-subject"></canvas></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -368,37 +398,40 @@
     </div>
   </div>
 
-  <!-- Modal: 黒板掲示の投稿 -->
+  <!-- Modal: 黒板掲示の投稿 (多機能拡張) -->
   <div id="modalBoard" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
       <div class="bg-emerald-900 px-4 py-3 text-white flex justify-between items-center">
-        <h3 class="font-bold text-sm">黒板に小テスト・プリント告知を投稿</h3>
+        <h3 class="font-bold text-sm">黒板に連絡・予定を投稿</h3>
         <button id="btn-close-board-modal" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <form id="boardForm" class="p-4 space-y-3">
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">種別</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">連絡種別 *</label>
           <select id="boardType" class="w-full border p-2 rounded-lg text-xs outline-none bg-white">
             <option value="小テスト">✏️ 小テスト告知</option>
-            <option value="プリント・課題">📄 プリント課題締切</option>
-            <option value="連絡事項">📢 全体連絡</option>
+            <option value="プリント・課題">📄 プリント・課題締切</option>
+            <option value="行事・イベント">🎉 行事・イベント予定</option>
+            <option value="全体連絡">📢 全体連絡・お知らせ</option>
+            <option value="授業変更">🏫 授業変更・補講</option>
+            <option value="その他">📌 その他</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">タイトル / 科目 *</label>
-          <input type="text" id="boardTitle" required placeholder="例: 数学I 復習小テスト" class="w-full border p-2 rounded-lg text-xs outline-none">
+          <label class="block text-xs font-bold text-slate-600 mb-1">タイトル / 科目名 *</label>
+          <input type="text" id="boardTitle" required placeholder="例: 数学I 復習小テスト / 文化祭準備" class="w-full border p-2 rounded-lg text-xs outline-none">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">実施・提出日時 *</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">実施・提出・イベント日時 *</label>
           <input type="datetime-local" id="boardDate" required class="w-full border p-2 rounded-lg text-xs outline-none">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">詳細・持ち物・範囲など</label>
-          <textarea id="boardContent" rows="3" placeholder="教科書 P.20〜35 範囲" class="w-full border p-2 rounded-lg text-xs outline-none"></textarea>
+          <label class="block text-xs font-bold text-slate-600 mb-1">詳細・メモ・持ち物など</label>
+          <textarea id="boardContent" rows="3" placeholder="教科書 P.20〜35 範囲 / 体育館集合" class="w-full border p-2 rounded-lg text-xs outline-none"></textarea>
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t">
@@ -456,6 +489,8 @@
     ];
     let boardItems = [];
     let calendarInstance = null;
+    let statusChart = null;
+    let subjectChart = null;
 
     const statusConfig = {
       todo: { label: '未着手', bg: 'bg-red-50 text-red-700', borderClass: 'status-border-todo' },
@@ -483,6 +518,10 @@
         document.getElementById(`tab-${tab}-pc`)?.addEventListener('click', () => switchTab(tab));
         document.getElementById(`tab-${tab}-mb`)?.addEventListener('click', () => switchTab(tab));
       });
+
+      // ヘッダー固定の「黒板投稿」ボタン
+      document.getElementById('btn-header-board-pc')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
+      document.getElementById('btn-header-board-mb')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
 
       // ユーザー名変更モーダル
       document.getElementById('btn-open-name-modal-pc')?.addEventListener('click', openNameModal);
@@ -590,6 +629,8 @@
 
       if (tabName === 'calendar' && calendarInstance) {
         setTimeout(() => calendarInstance.render(), 100);
+      } else if (tabName === 'tasks') {
+        renderAnalytics();
       }
     }
 
@@ -748,6 +789,7 @@
       });
 
       if (calendarInstance) updateCalendarEvents();
+      renderAnalytics();
     }
 
     function saveTask(e) {
@@ -767,6 +809,42 @@
     function deleteTask(id) {
       tasks = tasks.filter(t => t.id !== id);
       renderTasks();
+    }
+
+    /* --- 課題進捗レポートグラフ描画 --- */
+    function renderAnalytics() {
+      const ctxStatus = document.getElementById('chart-status');
+      const ctxSubject = document.getElementById('chart-subject');
+      if (!ctxStatus || !ctxSubject) return;
+
+      if (statusChart) statusChart.destroy();
+      if (subjectChart) subjectChart.destroy();
+
+      const counts = { todo: 0, doing: 0, submitted: 0, done: 0 };
+      const subCounts = {};
+
+      tasks.forEach(t => {
+        if (counts[t.status] !== undefined) counts[t.status]++;
+        subCounts[t.subject] = (subCounts[t.subject] || 0) + 1;
+      });
+
+      statusChart = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+          labels: ['未着手', '進行中', '提出済み', '完了'],
+          datasets: [{ data: [counts.todo, counts.doing, counts.submitted, counts.done], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      subjectChart = new Chart(ctxSubject, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(subCounts),
+          datasets: [{ label: '課題数', data: Object.values(subCounts), backgroundColor: '#1e293b' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+      });
     }
 
     /* --- 共有カレンダー --- */

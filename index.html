@@ -102,23 +102,40 @@
     <!-- 0. ポータル（ショートカット, Gemini 連携, 埋め込み Google カレンダー） -->
     <section id="section-portal" class="tab-content block space-y-4 md:space-y-6">
       
-      <!-- ショートカットカード -->
+      <!-- ショートカットカード ヘッダー＆設定ボタン -->
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm md:text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-bookmark text-indigo-600"></i> ショートカット
+        </h2>
+        <button id="btn-open-shortcut-modal" class="text-xs bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+          <i class="fa-solid fa-gear text-slate-500"></i> カスタムリンク設定
+        </button>
+      </div>
+
+      <!-- ショートカットカード (Classroom / Teams 固定、後半2つはカスタム) -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <!-- 1. Google Classroom (固定) -->
         <a href="https://classroom.google.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
           <i class="fa-solid fa-chalkboard-user text-3xl md:text-4xl text-emerald-600 mb-1.5 md:mb-2"></i>
           <span class="font-bold text-slate-800 text-sm md:text-base">Classroom</span>
         </a>
-        <a href="https://calendar.google.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
-          <i class="fa-solid fa-calendar-days text-3xl md:text-4xl text-blue-600 mb-1.5 md:mb-2"></i>
-          <span class="font-bold text-slate-800 text-sm md:text-base">カレンダー</span>
-        </a>
+
+        <!-- 2. Microsoft Teams (固定) -->
         <a href="https://teams.microsoft.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
           <i class="fa-solid fa-users text-3xl md:text-4xl text-indigo-600 mb-1.5 md:mb-2"></i>
           <span class="font-bold text-slate-800 text-sm md:text-base">Teams</span>
         </a>
-        <a href="https://moodle.org" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+
+        <!-- 3. カスタムショートカット 1 -->
+        <a id="shortcut-card-3" href="https://calendar.google.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+          <i class="fa-solid fa-globe text-3xl md:text-4xl text-blue-600 mb-1.5 md:mb-2"></i>
+          <span id="shortcut-label-3" class="font-bold text-slate-800 text-sm md:text-base">Googleカレンダー</span>
+        </a>
+
+        <!-- 4. カスタムショートカット 2 -->
+        <a id="shortcut-card-4" href="https://moodle.org" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
           <i class="fa-solid fa-graduation-cap text-3xl md:text-4xl text-amber-500 mb-1.5 md:mb-2"></i>
-          <span class="font-bold text-slate-800 text-sm md:text-base">Moodle</span>
+          <span id="shortcut-label-4" class="font-bold text-slate-800 text-sm md:text-base">Moodle</span>
         </a>
       </div>
 
@@ -292,7 +309,7 @@
         </table>
       </div>
 
-      <!-- 課題進捗統計グラフエリア (復活機能) -->
+      <!-- 課題進捗統計グラフエリア -->
       <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
         <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
           <i class="fa-solid fa-chart-pie text-indigo-600"></i> 課題の進捗レポート & 負荷分析
@@ -347,6 +364,51 @@
     </button>
   </nav>
 
+  <!-- Modal: カスタムショートカットリンク設定 -->
+  <div id="modalShortcut" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
+      <div class="bg-indigo-900 px-4 py-3 text-white flex justify-between items-center">
+        <h3 class="font-bold text-sm">カスタムリンクの設定</h3>
+        <button id="btn-close-shortcut-modal" class="text-indigo-200 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="p-4 space-y-4">
+        <p class="text-xs text-slate-500">Classroom と Teams 以外の残り2つのショートカットリンクを自由に変更できます。</p>
+        
+        <!-- カード3の設定 -->
+        <div class="p-3 bg-slate-50 rounded-lg border space-y-2">
+          <span class="text-xs font-bold text-indigo-700">ショートカット 3</span>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">表示名</label>
+            <input type="text" id="shortcut-name-3" placeholder="例: Googleカレンダー" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">URL</label>
+            <input type="url" id="shortcut-url-3" placeholder="https://calendar.google.com" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+          </div>
+        </div>
+
+        <!-- カード4の設定 -->
+        <div class="p-3 bg-slate-50 rounded-lg border space-y-2">
+          <span class="text-xs font-bold text-indigo-700">ショートカット 4</span>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">表示名</label>
+            <input type="text" id="shortcut-name-4" placeholder="例: Moodle" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">URL</label>
+            <input type="url" id="shortcut-url-4" placeholder="https://moodle.org" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button id="btn-cancel-shortcut-modal" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
+          <button id="btn-save-shortcut-modal" class="px-3 py-1.5 bg-indigo-900 text-white rounded-lg text-xs font-bold">設定を保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: 個人課題追加・編集 -->
   <div id="modalTask" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
@@ -398,7 +460,7 @@
     </div>
   </div>
 
-  <!-- Modal: 黒板掲示の投稿 (多機能拡張) -->
+  <!-- Modal: 黒板掲示の投稿 -->
   <div id="modalBoard" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
       <div class="bg-emerald-900 px-4 py-3 text-white flex justify-between items-center">
@@ -502,6 +564,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       updateUserDisplayName();
+      initShortcuts();
       renderTasks();
       initGeminiLauncher();
       initEmbedCalendar();
@@ -509,6 +572,53 @@
       initCalendar();
       setupEventListeners();
     });
+
+    /* --- ショートカットリンク管理 --- */
+    function initShortcuts() {
+      const sc3 = JSON.parse(localStorage.getItem('edutask_sc_3')) || { name: 'Googleカレンダー', url: 'https://calendar.google.com' };
+      const sc4 = JSON.parse(localStorage.getItem('edutask_sc_4')) || { name: 'Moodle', url: 'https://moodle.org' };
+
+      updateShortcutCard(3, sc3.name, sc3.url);
+      updateShortcutCard(4, sc4.name, sc4.url);
+    }
+
+    function updateShortcutCard(num, name, url) {
+      const card = document.getElementById(`shortcut-card-${num}`);
+      const label = document.getElementById(`shortcut-label-${num}`);
+      if (card) card.href = url || '#';
+      if (label) label.innerText = name || `リンク ${num}`;
+    }
+
+    function openShortcutModal() {
+      const sc3 = JSON.parse(localStorage.getItem('edutask_sc_3')) || { name: 'Googleカレンダー', url: 'https://calendar.google.com' };
+      const sc4 = JSON.parse(localStorage.getItem('edutask_sc_4')) || { name: 'Moodle', url: 'https://moodle.org' };
+
+      document.getElementById('shortcut-name-3').value = sc3.name;
+      document.getElementById('shortcut-url-3').value = sc3.url;
+      document.getElementById('shortcut-name-4').value = sc4.name;
+      document.getElementById('shortcut-url-4').value = sc4.url;
+
+      document.getElementById('modalShortcut').classList.remove('hidden');
+    }
+
+    function saveShortcutSettings() {
+      const sc3 = {
+        name: document.getElementById('shortcut-name-3').value.trim() || 'リンク 3',
+        url: document.getElementById('shortcut-url-3').value.trim() || 'https://'
+      };
+      const sc4 = {
+        name: document.getElementById('shortcut-name-4').value.trim() || 'リンク 4',
+        url: document.getElementById('shortcut-url-4').value.trim() || 'https://'
+      };
+
+      localStorage.setItem('edutask_sc_3', JSON.stringify(sc3));
+      localStorage.setItem('edutask_sc_4', JSON.stringify(sc4));
+
+      updateShortcutCard(3, sc3.name, sc3.url);
+      updateShortcutCard(4, sc4.name, sc4.url);
+
+      document.getElementById('modalShortcut').classList.add('hidden');
+    }
 
     /* --- イベントリスナーの一括設定 --- */
     function setupEventListeners() {
@@ -518,6 +628,12 @@
         document.getElementById(`tab-${tab}-pc`)?.addEventListener('click', () => switchTab(tab));
         document.getElementById(`tab-${tab}-mb`)?.addEventListener('click', () => switchTab(tab));
       });
+
+      // カスタムショートカット設定モーダル
+      document.getElementById('btn-open-shortcut-modal')?.addEventListener('click', openShortcutModal);
+      document.getElementById('btn-close-shortcut-modal')?.addEventListener('click', () => document.getElementById('modalShortcut').classList.add('hidden'));
+      document.getElementById('btn-cancel-shortcut-modal')?.addEventListener('click', () => document.getElementById('modalShortcut').classList.add('hidden'));
+      document.getElementById('btn-save-shortcut-modal')?.addEventListener('click', saveShortcutSettings);
 
       // ヘッダー固定の「黒板投稿」ボタン
       document.getElementById('btn-header-board-pc')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));

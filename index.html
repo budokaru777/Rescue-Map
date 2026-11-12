@@ -208,7 +208,7 @@
     <section id="section-chat" class="tab-content hidden">
       <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[75vh]">
         <!-- Chat Header -->
-        <div class="p-3.5 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl shrink-0">
+        <div class="p-3.5 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-comments text-indigo-600"></i>
             <span class="font-bold text-sm md:text-base text-slate-800">クラスチャット</span>
@@ -217,12 +217,12 @@
         </div>
 
         <!-- Chat Messages Area -->
-        <div id="chat-messages-container" class="flex-1 p-3 md:p-4 overflow-y-auto space-y-3 bg-slate-50/50 min-h-0">
+        <div id="chat-messages-container" class="flex-1 p-3 md:p-4 overflow-y-auto space-y-3 bg-slate-50/50">
           <div class="text-center text-slate-400 text-xs py-8">メッセージを読み込んでいます...</div>
         </div>
 
         <!-- Chat Input Form -->
-        <form id="chat-form" class="p-2 md:p-3 bg-white border-t border-slate-200 flex gap-2 rounded-b-xl shrink-0">
+        <form id="chat-form" class="p-2 md:p-3 bg-white border-t border-slate-200 flex gap-2 rounded-b-xl">
           <input type="text" id="chat-input" placeholder="メッセージを入力..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-400">
           <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-1">
             <i class="fa-solid fa-paper-plane"></i>
@@ -522,6 +522,9 @@
       getFirestore, 
       collection, 
       addDoc, 
+      doc,
+      setDoc,
+      getDocs,
       query, 
       orderBy, 
       limit, 
@@ -544,7 +547,13 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    /* --- アプリ状態管理 --- */
+    /* --- ユーザー識別ID & アプリ状態管理 --- */
+    let userId = localStorage.getItem('edutask_userid');
+    if (!userId) {
+      userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem('edutask_userid', userId);
+    }
+
     let userName = localStorage.getItem('edutask_username') || ('生徒' + Math.floor(Math.random() * 899 + 100));
     let tasks = JSON.parse(localStorage.getItem('edutask_tasks_v2')) || [
       { id: '1', title: '【例】数学ワーク 提出', subject: '数学', status: 'todo', dueDate: '2026-10-30T23:59' }
@@ -562,6 +571,96 @@
       overdue: { label: '期限超過', bg: 'bg-purple-50 text-purple-700', borderClass: 'status-border-overdue' }
     };
 
+    /* --- ユーザー情報のFirestore自動同期 --- */
+    async function syncUserProfileToFirebase() {
+      try {
+        const calId = localStorage.getItem('portal_cal_id') || '';
+        const sc3 = JSON.parse(localStorage.getItem('edutask_sc_3')) || {};
+        const sc4 = JSON.parse(localStorage.getItem('edutask_sc_4')) || {};
+
+        await setDoc(doc(db, "users", userId), {
+          userId: userId,
+          userName: userName,
+          calendarId: calId,
+          shortcut3: sc3.name ? `${sc3.name} (${sc3.url})` : '',
+          shortcut4: sc4.name ? `${sc4.name} (${sc4.url})` : '',
+          taskCount: tasks.length,
+          tasks: tasks,
+          lastActive: serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        console.error("ユーザー情報の同期エラー:", err);
+      }
+    }
+
+    /* --- 全ユーザー情報のCSV（スプレッドシート用）書き出し --- */
+    async function exportAllUsersToCSV() {
+      try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        if (querySnapshot.empty) {
+          alert("ユーザーデータがまだありません。");
+          return;
+        }
+
+        const headers = [
+          "ユーザーID",
+          "表示名",
+          "カレンダーID",
+          "登録課題数",
+          "課題一覧（タイトル・教科・状態・締切）",
+          "カスタムリンク3",
+          "カスタムリンク4",
+          "最終アクセス日時"
+        ];
+
+        const rows = [headers.join(",")];
+
+        querySnapshot.forEach((docSnap) => {
+          const d = docSnap.data();
+
+          const taskSummary = (d.tasks || []).map(t => 
+            `[${t.subject}]${t.title}(${t.status}/締切:${t.dueDate || 'なし'})`
+          ).join(" | ");
+
+          let lastActiveStr = "";
+          if (d.lastActive && d.lastActive.toDate) {
+            lastActiveStr = d.lastActive.toDate().toLocaleString('ja-JP');
+          }
+
+          const rowData = [
+            d.userId || docSnap.id,
+            d.userName || "",
+            d.calendarId || "",
+            d.taskCount || 0,
+            taskSummary,
+            d.shortcut3 || "",
+            d.shortcut4 || "",
+            lastActiveStr
+          ].map(val => `"${String(val).replace(/"/g, '""')}"`);
+
+          rows.push(rowData.join(","));
+        });
+
+        // BOM付きUTF-8でCSVを生成（Excel/Googleスプレッドシートでの文字化け防止）
+        const csvContent = "\uFEFF" + rows.join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        const dateStr = new Date().toISOString().slice(0, 10);
+        link.href = url;
+        link.setAttribute("download", `eduportal_users_${dateStr}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+      } catch (err) {
+        console.error("CSV出力エラー:", err);
+        alert("データの取得に失敗しました。Firestoreのルール設定を確認してください。");
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       updateUserDisplayName();
       initShortcuts();
@@ -571,6 +670,7 @@
       initFirebaseListeners();
       initCalendar();
       setupEventListeners();
+      syncUserProfileToFirebase();
     });
 
     /* --- ショートカットリンク管理 --- */
@@ -616,552 +716,445 @@
 
       updateShortcutCard(3, sc3.name, sc3.url);
       updateShortcutCard(4, sc4.name, sc4.url);
+      syncUserProfileToFirebase();
 
       document.getElementById('modalShortcut').classList.add('hidden');
     }
 
-    /* --- Gemini 連携機能 --- */
-    function initGeminiLauncher() {
-      const btn = document.getElementById('send-to-gemini-btn');
-      if (!btn) return;
-      btn.addEventListener('click', () => {
-        const titleInput = document.getElementById('task-title-input');
-        const title = titleInput ? titleInput.value.trim() : '';
-        const promptText = title
-          ? `以下の課題のレポート構成案、アウトライン、調査ポイントを作成してください。\n課題名: 「${title}」`
-          : `課題のレポート構成案、アウトライン、調査ポイントを作成してください。`;
-
-        navigator.clipboard.writeText(promptText).then(() => {
-          alert('Gemini への指示文をクリップボードにコピーしました！\nGemini が開いたら貼り付けて送信してください。');
-          window.open('https://gemini.google.com', '_blank');
-        }).catch(() => {
-          window.open('https://gemini.google.com', '_blank');
-        });
-      });
-    }
-
-    /* --- Google カレンダー埋め込み機能 --- */
-    function initEmbedCalendar() {
-      const savedId = localStorage.getItem('edutask_calendar_id') || 'rf24059q@st.omu.ac.jp';
-      const input = document.getElementById('calendar-id');
-      if (input) input.value = savedId;
-      updateCalendarIframe(savedId);
-
-      const saveBtn = document.getElementById('btn-save-calendar-settings');
-      if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-          const newId = input ? input.value.trim() : '';
-          if (newId) {
-            localStorage.setItem('edutask_calendar_id', newId);
-            updateCalendarIframe(newId);
-            const status = document.getElementById('cal-status-text');
-            if (status) {
-              status.innerText = '保存しました';
-              setTimeout(() => { status.innerText = ''; }, 3000);
-            }
-          }
-        });
-      }
-    }
-
-    function updateCalendarIframe(calId) {
-      const iframe = document.getElementById('calendar-iframe');
-      if (iframe) {
-        const encodedId = encodeURIComponent(calId);
-        iframe.src = `https://calendar.google.com/calendar/embed?src=${encodedId}&ctz=Asia%2FTokyo`;
-      }
-    }
-
-    /* --- ユーザー表示名設定 --- */
-    function updateUserDisplayName() {
-      const pcLabel = document.getElementById('user-display-name-pc');
-      const mbLabel = document.getElementById('user-display-name-mb');
-      if (pcLabel) pcLabel.innerText = userName;
-      if (mbLabel) mbLabel.innerText = userName;
-    }
-
-    function saveUserName() {
-      const input = document.getElementById('userNameInput');
-      if (input && input.value.trim() !== '') {
-        userName = input.value.trim();
-        localStorage.setItem('edutask_username', userName);
-        updateUserDisplayName();
-        document.getElementById('modalName').classList.add('hidden');
-      }
-    }
-
-    /* --- Firebase リアルタイム通信 (チャット & 黒板) --- */
-    function initFirebaseListeners() {
-      // 1. チャット受信
-      const chatQuery = query(collection(db, 'chats'), orderBy('createdAt', 'asc'), limit(100));
-      onSnapshot(chatQuery, (snapshot) => {
-        const chatContainer = document.getElementById('chat-messages-container');
-        if (!chatContainer) return;
-        chatContainer.innerHTML = '';
-
-        if (snapshot.empty) {
-          chatContainer.innerHTML = '<div class="text-center text-slate-400 text-xs py-8">まだメッセージがありません</div>';
-          return;
-        }
-
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          const isMe = data.userName === userName;
-
-          const msgDiv = document.createElement('div');
-          msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-
-          const nameSpan = document.createElement('span');
-          nameSpan.className = 'text-[10px] text-slate-400 mb-0.5 px-1';
-          nameSpan.innerText = data.userName || '匿名生徒';
-
-          const bubble = document.createElement('div');
-          bubble.className = `max-w-[80%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${
-            isMe ? 'bg-slate-900 text-white rounded-br-xs' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-xs shadow-sm'
-          }`;
-          bubble.innerText = data.text || '';
-
-          msgDiv.appendChild(nameSpan);
-          msgDiv.appendChild(bubble);
-          chatContainer.appendChild(msgDiv);
-        });
-
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }, (error) => {
-        console.error("Chat Listener Error:", error);
-      });
-
-      // 2. 黒板掲示板受信
-      const boardQuery = query(collection(db, 'board_items'), orderBy('createdAt', 'desc'), limit(50));
-      onSnapshot(boardQuery, (snapshot) => {
-        boardItems = [];
-        snapshot.forEach((doc) => {
-          boardItems.push({ id: doc.id, ...doc.data() });
-        });
-        renderBoardItems();
-        if (calendarInstance) calendarInstance.refetchEvents();
-      }, (error) => {
-        console.error("Board Listener Error:", error);
-      });
-    }
-
-    // チャット送信
-    const chatForm = document.getElementById('chat-form');
-    if (chatForm) {
-      chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const input = document.getElementById('chat-input');
-        const text = input ? input.value.trim() : '';
-        if (!text) return;
-
-        input.value = '';
-        try {
-          await addDoc(collection(db, 'chats'), {
-            userName: userName,
-            text: text,
-            createdAt: serverTimestamp()
-          });
-        } catch (err) {
-          console.error("Chat Send Error:", err);
-          alert('メッセージの送信に失敗しました');
-        }
-      });
-    }
-
-    // 黒板投稿
-    const boardForm = document.getElementById('boardForm');
-    if (boardForm) {
-      boardForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const type = document.getElementById('boardType').value;
-        const title = document.getElementById('boardTitle').value.trim();
-        const date = document.getElementById('boardDate').value;
-        const content = document.getElementById('boardContent').value.trim();
-
-        if (!title || !date) return;
-
-        try {
-          await addDoc(collection(db, 'board_items'), {
-            type,
-            title,
-            date,
-            content,
-            author: userName,
-            createdAt: serverTimestamp()
-          });
-          boardForm.reset();
-          document.getElementById('modalBoard').classList.add('hidden');
-        } catch (err) {
-          console.error("Board Post Error:", err);
-          alert('掲示の投稿に失敗しました');
-        }
-      });
-    }
-
-    function renderBoardItems() {
-      const container = document.getElementById('board-items-container');
-      if (!container) return;
-      container.innerHTML = '';
-
-      if (boardItems.length === 0) {
-        container.innerHTML = '<div class="col-span-full text-center chalk-text-white py-12 text-sm">掲示物はまだありません</div>';
-        return;
-      }
-
-      boardItems.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3.5 text-slate-100 flex flex-col justify-between space-y-2';
-
-        const formattedDate = item.date ? item.date.replace('T', ' ') : '日時未設定';
-
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="bg-amber-400 text-amber-950 font-bold text-[10px] px-2 py-0.5 rounded-full">${escapeHtml(item.type || '連絡')}</span>
-              <span class="text-[11px] chalk-text-yellow"><i class="fa-regular fa-clock mr-1"></i>${escapeHtml(formattedDate)}</span>
-            </div>
-            <h4 class="font-bold text-sm md:text-base chalk-text-white">${escapeHtml(item.title || '')}</h4>
-            ${item.content ? `<p class="text-xs text-slate-200 mt-1 whitespace-pre-wrap leading-relaxed">${escapeHtml(item.content)}</p>` : ''}
-          </div>
-          <div class="text-[10px] text-slate-300 text-right pt-2 border-t border-white/10">
-            投稿者: ${escapeHtml(item.author || '匿名')}
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    /* --- 個人課題管理 & カンバン/リスト描画 --- */
-    function renderTasks() {
-      localStorage.setItem('edutask_tasks_v2', JSON.stringify(tasks));
-
-      const queryText = (document.getElementById('searchQuery')?.value || '').toLowerCase();
-      const filterSub = document.getElementById('filterSubject')?.value || 'ALL';
-
-      const filtered = tasks.filter(t => {
-        const matchesQuery = t.title.toLowerCase().includes(queryText);
-        const matchesSub = filterSub === 'ALL' || t.subject === filterSub;
-        return matchesQuery && matchesSub;
-      });
-
-      // カンバンエリアのクリア
-      ['todo', 'doing', 'submitted', 'done'].forEach(st => {
-        const el = document.getElementById(`container-${st}`);
-        if (el) el.innerHTML = '';
-      });
-
-      const counts = { todo: 0, doing: 0, submitted: 0, done: 0 };
-      const now = new Date();
-
-      filtered.forEach(task => {
-        let currentStatus = task.status;
-        const due = new Date(task.dueDate);
-        if (currentStatus !== 'done' && currentStatus !== 'submitted' && due < now) {
-          currentStatus = 'overdue';
-        }
-
-        if (counts[task.status] !== undefined) counts[task.status]++;
-
-        const card = createTaskCard(task, currentStatus);
-        const container = document.getElementById(`container-${task.status}`);
-        if (container) container.appendChild(card);
-      });
-
-      // カウントの更新
-      ['todo', 'doing', 'submitted', 'done'].forEach(st => {
-        const badge = document.getElementById(`count-${st}`);
-        if (badge) badge.innerText = counts[st] || 0;
-      });
-
-      renderListView(filtered);
-      renderCharts();
-      if (calendarInstance) calendarInstance.refetchEvents();
-    }
-
-    function createTaskCard(task, currentStatus) {
-      const conf = statusConfig[currentStatus] || statusConfig.todo;
-      const card = document.createElement('div');
-      card.className = `bg-white p-3 rounded-lg border border-slate-200 shadow-sm ${conf.borderClass} space-y-2`;
-
-      const formattedDate = task.dueDate ? task.dueDate.replace('T', ' ') : '';
-
-      card.innerHTML = `
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded ${conf.bg}">${conf.label}</span>
-          <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">${escapeHtml(task.subject)}</span>
-        </div>
-        <h4 class="font-bold text-xs md:text-sm text-slate-800 leading-snug">${escapeHtml(task.title)}</h4>
-        <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-          <span><i class="fa-regular fa-clock mr-1"></i>${escapeHtml(formattedDate)}</span>
-          <div class="flex items-center gap-1">
-            <button onclick="editTask('${task.id}')" class="hover:text-slate-900 p-1"><i class="fa-solid fa-pen"></i></button>
-            <button onclick="deleteTask('${task.id}')" class="hover:text-red-600 p-1"><i class="fa-solid fa-trash"></i></button>
-          </div>
-        </div>
-      `;
-      return card;
-    }
-
-    function renderListView(taskList) {
-      const tbody = document.getElementById('list-table-body');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      taskList.forEach(task => {
-        const conf = statusConfig[task.status] || statusConfig.todo;
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50';
-
-        tr.innerHTML = `
-          <td class="p-2.5"><span class="text-[10px] font-bold px-2 py-0.5 rounded ${conf.bg}">${conf.label}</span></td>
-          <td class="p-2.5 font-bold">${escapeHtml(task.subject)}</td>
-          <td class="p-2.5 font-bold text-slate-800">${escapeHtml(task.title)}</td>
-          <td class="p-2.5 text-slate-500">${escapeHtml(task.dueDate.replace('T', ' '))}</td>
-          <td class="p-2.5 text-right">
-            <button onclick="editTask('${task.id}')" class="text-slate-600 hover:text-slate-900 mr-2"><i class="fa-solid fa-pen"></i></button>
-            <button onclick="deleteTask('${task.id}')" class="text-slate-600 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    /* --- 課題の追加・編集・削除グローバル関数 --- */
-    window.editTask = function(id) {
-      const task = tasks.find(t => t.id === id);
-      if (!task) return;
-
-      document.getElementById('taskId').value = task.id;
-      document.getElementById('taskTitle').value = task.title;
-      document.getElementById('taskSubject').value = task.subject;
-      document.getElementById('taskStatus').value = task.status;
-      document.getElementById('taskDueDate').value = task.dueDate;
-
-      document.getElementById('modalTitle').innerText = '課題の編集';
-      document.getElementById('modalTask').classList.remove('hidden');
-    };
-
-    window.deleteTask = function(id) {
-      if (confirm('この課題を削除しますか？')) {
-        tasks = tasks.filter(t => t.id !== id);
-        renderTasks();
-      }
-    };
-
-    // 課題フォーム送信
-    const taskForm = document.getElementById('taskForm');
-    if (taskForm) {
-      taskForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const id = document.getElementById('taskId').value;
-        const title = document.getElementById('taskTitle').value.trim();
-        const subject = document.getElementById('taskSubject').value;
-        const status = document.getElementById('taskStatus').value;
-        const dueDate = document.getElementById('taskDueDate').value;
-
-        if (!title || !dueDate) return;
-
-        if (id) {
-          const idx = tasks.findIndex(t => t.id === id);
-          if (idx !== -1) tasks[idx] = { id, title, subject, status, dueDate };
-        } else {
-          tasks.push({ id: Date.now().toString(), title, subject, status, dueDate });
-        }
-
-        document.getElementById('modalTask').classList.add('hidden');
-        renderTasks();
-      });
-    }
-
-    /* --- 分析グラフ描画 (Chart.js) --- */
-    function renderCharts() {
-      const statusCtx = document.getElementById('chart-status')?.getContext('2d');
-      const subjectCtx = document.getElementById('chart-subject')?.getContext('2d');
-      if (!statusCtx || !subjectCtx) return;
-
-      const statusCounts = { todo: 0, doing: 0, submitted: 0, done: 0 };
-      const subjectCounts = {};
-
-      tasks.forEach(t => {
-        if (statusCounts[t.status] !== undefined) statusCounts[t.status]++;
-        subjectCounts[t.subject] = (subjectCounts[t.subject] || 0) + 1;
-      });
-
-      if (statusChart) statusChart.destroy();
-      statusChart = new Chart(statusCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['未着手', '進行中', '提出済み', '完了'],
-          datasets: [{
-            data: [statusCounts.todo, statusCounts.doing, statusCounts.submitted, statusCounts.done],
-            backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981']
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-
-      if (subjectChart) subjectChart.destroy();
-      subjectChart = new Chart(subjectCtx, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(subjectCounts),
-          datasets: [{
-            label: '課題数',
-            data: Object.values(subjectCounts),
-            backgroundColor: '#6366f1'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
-      });
-    }
-
-    /* --- FullCalendar 連携 --- */
-    function initCalendar() {
-      const calendarEl = document.getElementById('calendar');
-      if (!calendarEl) return;
-
-      calendarInstance = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'ja',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek'
-        },
-        events: function(fetchInfo, successCallback, failureCallback) {
-          const events = [];
-
-          // 1. 黒板予定
-          boardItems.forEach(b => {
-            if (b.date) {
-              events.push({
-                title: `[黒板] ${b.title}`,
-                start: b.date,
-                backgroundColor: '#4f46e5',
-                borderColor: '#4338ca'
-              });
-            }
-          });
-
-          // 2. 個人課題
-          tasks.forEach(t => {
-            if (t.dueDate) {
-              events.push({
-                title: `[締切] ${t.title}`,
-                start: t.dueDate,
-                backgroundColor: '#334155',
-                borderColor: '#1e293b'
-              });
-            }
-          });
-
-          successCallback(events);
-        }
-      });
-      calendarInstance.render();
-    }
-
-    /* --- イベントリスナー・タブ切り替え統括 --- */
+    /* --- イベントリスナーの一括設定 --- */
     function setupEventListeners() {
-      // モーダルオープン / クローズ系
+      // タブ切り替えイベント設定
+      const tabs = ['portal', 'board', 'chat', 'tasks', 'calendar'];
+      tabs.forEach(tab => {
+        document.getElementById(`tab-${tab}-pc`)?.addEventListener('click', () => switchTab(tab));
+        document.getElementById(`tab-${tab}-mb`)?.addEventListener('click', () => switchTab(tab));
+      });
+
+      // カスタムショートカット設定モーダル
       document.getElementById('btn-open-shortcut-modal')?.addEventListener('click', openShortcutModal);
       document.getElementById('btn-close-shortcut-modal')?.addEventListener('click', () => document.getElementById('modalShortcut').classList.add('hidden'));
       document.getElementById('btn-cancel-shortcut-modal')?.addEventListener('click', () => document.getElementById('modalShortcut').classList.add('hidden'));
       document.getElementById('btn-save-shortcut-modal')?.addEventListener('click', saveShortcutSettings);
 
-      document.getElementById('btn-open-task-modal')?.addEventListener('click', () => {
-        document.getElementById('taskForm').reset();
-        document.getElementById('taskId').value = '';
-        document.getElementById('modalTitle').innerText = '課題の追加';
-        document.getElementById('modalTask').classList.remove('hidden');
-      });
-      document.getElementById('btn-close-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
-      document.getElementById('btn-cancel-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
+      // ヘッダー固定の「黒板投稿」ボタン
+      document.getElementById('btn-header-board-pc')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
+      document.getElementById('btn-header-board-mb')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
 
-      const openBoardModal = () => document.getElementById('modalBoard').classList.remove('hidden');
-      document.getElementById('btn-open-board-modal')?.addEventListener('click', openBoardModal);
-      document.getElementById('btn-header-board-pc')?.addEventListener('click', openBoardModal);
-      document.getElementById('btn-header-board-mb')?.addEventListener('click', openBoardModal);
-      document.getElementById('btn-close-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
-      document.getElementById('btn-cancel-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
-
-      const openNameModal = () => {
-        document.getElementById('userNameInput').value = userName;
-        document.getElementById('modalName').classList.remove('hidden');
-      };
+      // ユーザー名変更モーダル
       document.getElementById('btn-open-name-modal-pc')?.addEventListener('click', openNameModal);
       document.getElementById('btn-open-name-modal-mb')?.addEventListener('click', openNameModal);
       document.getElementById('btn-save-username')?.addEventListener('click', saveUserName);
 
-      // 検索・フィルター
+      // カレンダーID保存
+      document.getElementById('btn-save-calendar-settings')?.addEventListener('click', saveCalendarSettings);
+
+      // 黒板掲示モーダル
+      document.getElementById('btn-open-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
+      document.getElementById('btn-close-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
+      document.getElementById('btn-cancel-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
+      document.getElementById('boardForm')?.addEventListener('submit', saveBoardItem);
+
+      // チャット送信
+      document.getElementById('chat-form')?.addEventListener('submit', sendChatMessage);
+
+      // 課題管理モーダル＆表示切り替え
+      document.getElementById('btn-open-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.remove('hidden'));
+      document.getElementById('btn-close-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
+      document.getElementById('btn-cancel-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
+      document.getElementById('taskForm')?.addEventListener('submit', saveTask);
+
+      document.getElementById('btn-kanban')?.addEventListener('click', () => setViewMode('kanban'));
+      document.getElementById('btn-list')?.addEventListener('click', () => setViewMode('list'));
+
       document.getElementById('searchQuery')?.addEventListener('input', renderTasks);
       document.getElementById('filterSubject')?.addEventListener('change', renderTasks);
 
-      // ビュー切り替え (カンバン / リスト)
-      document.getElementById('btn-kanban')?.addEventListener('click', () => {
-        document.getElementById('view-kanban').classList.remove('hidden');
-        document.getElementById('view-list').classList.add('hidden');
-        document.getElementById('btn-kanban').className = 'px-2.5 py-1 rounded-lg border text-xs bg-slate-100 font-bold';
-        document.getElementById('btn-list').className = 'px-2.5 py-1 rounded-lg border text-xs bg-white text-slate-600';
+      // 管理者モード（URLに ?admin=1 を付与した場合のみCSV書き出しボタンを表示）
+      if (new URLSearchParams(window.location.search).get('admin') === '1') {
+        const adminBtn = document.createElement('button');
+        adminBtn.innerHTML = '<i class="fa-solid fa-file-csv"></i> 全ユーザーCSV出力';
+        adminBtn.className = 'fixed bottom-16 md:bottom-4 right-4 z-50 bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2';
+        adminBtn.addEventListener('click', exportAllUsersToCSV);
+        document.body.appendChild(adminBtn);
+      }
+    }
+
+    /* --- Google 埋め込みカレンダー管理 --- */
+    function initEmbedCalendar() {
+      const calIdInput = document.getElementById('calendar-id');
+      const userCalId = localStorage.getItem('portal_cal_id') || 'rf24059q@st.omu.ac.jp';
+      if (calIdInput) calIdInput.value = userCalId;
+      updateCalendarIframe(userCalId);
+    }
+
+    function updateCalendarIframe(email) {
+      const calIframe = document.getElementById('calendar-iframe');
+      const calStatusText = document.getElementById('cal-status-text');
+      if (!email) {
+        if (calStatusText) calStatusText.innerText = '※カレンダーIDを入力してください';
+        return;
+      }
+      const encodedEmail = encodeURIComponent(email);
+      if (calIframe) calIframe.src = `https://calendar.google.com/calendar/embed?src=${encodedEmail}&ctz=Asia%2FTokyo`;
+      if (calStatusText) calStatusText.innerText = `表示中: ${email}`;
+    }
+
+    function saveCalendarSettings() {
+      const email = document.getElementById('calendar-id').value.trim();
+      localStorage.setItem('portal_cal_id', email);
+      updateCalendarIframe(email);
+      syncUserProfileToFirebase();
+      alert('カレンダーIDを保存しました');
+    }
+
+    /* --- ユーザー名管理 --- */
+    function updateUserDisplayName() {
+      localStorage.setItem('edutask_username', userName);
+      document.getElementById('user-display-name-pc').innerText = userName;
+      document.getElementById('user-display-name-mb').innerText = userName;
+    }
+
+    function openNameModal() {
+      document.getElementById('userNameInput').value = userName;
+      document.getElementById('modalName').classList.remove('hidden');
+    }
+
+    function saveUserName() {
+      const val = document.getElementById('userNameInput').value.trim();
+      if (val) {
+        userName = val;
+        updateUserDisplayName();
+        syncUserProfileToFirebase();
+      }
+      document.getElementById('modalName').classList.add('hidden');
+    }
+
+    /* --- タブ切り替え --- */
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-slate-900', 'font-bold', 'shadow-sm');
+        btn.classList.add('text-slate-600');
       });
+      const pcTab = document.getElementById(`tab-${tabName}-pc`);
+      if (pcTab) {
+        pcTab.classList.add('bg-white', 'text-slate-900', 'font-bold', 'shadow-sm');
+        pcTab.classList.remove('text-slate-600');
+      }
 
-      document.getElementById('btn-list')?.addEventListener('click', () => {
-        document.getElementById('view-list').classList.remove('hidden');
-        document.getElementById('view-kanban').classList.add('hidden');
-        document.getElementById('btn-list').className = 'px-2.5 py-1 rounded-lg border text-xs bg-slate-100 font-bold';
-        document.getElementById('btn-kanban').className = 'px-2.5 py-1 rounded-lg border text-xs bg-white text-slate-600';
-      });
+      const mobileNavBtns = document.querySelectorAll('nav.md\\:hidden button');
+      mobileNavBtns.forEach(btn => btn.className = 'flex flex-col items-center gap-0.5 text-slate-500');
+      const mbTab = document.getElementById(`tab-${tabName}-mb`);
+      if (mbTab) {
+        mbTab.className = 'flex flex-col items-center gap-0.5 text-slate-900 font-bold';
+      }
 
-      // ナビゲーションタブ切り替え (PC & モバイル連動)
-      const tabs = [
-        { name: 'portal', title: 'ポータル' },
-        { name: 'board', title: '黒板掲示板' },
-        { name: 'chat', title: 'クラスチャット' },
-        { name: 'tasks', title: '個人課題' },
-        { name: 'calendar', title: '共有カレンダー' }
-      ];
+      const titles = { portal: 'ポータル', board: '黒板掲示板', chat: 'クラスチャット', tasks: '個人課題管理', calendar: '共有カレンダー' };
+      document.getElementById('mobile-header-title').innerText = titles[tabName] || 'ポータル';
 
-      tabs.forEach(tab => {
-        const switchTab = () => {
-          tabs.forEach(t => {
-            document.getElementById(`section-${t.name}`)?.classList.add('hidden');
-            const pcBtn = document.getElementById(`tab-${t.name}-pc`);
-            const mbBtn = document.getElementById(`tab-${t.name}-mb`);
-            if (pcBtn) pcBtn.className = 'tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900';
-            if (mbBtn) mbBtn.className = 'flex flex-col items-center gap-0.5 text-slate-500';
-          });
+      document.getElementById(`section-${tabName}`).classList.remove('hidden');
 
-          document.getElementById(`section-${tab.name}`)?.classList.remove('hidden');
-          const activePc = document.getElementById(`tab-${tab.name}-pc`);
-          const activeMb = document.getElementById(`tab-${tab.name}-mb`);
-          if (activePc) activePc.className = 'tab-btn px-3 py-1.5 rounded-md bg-white text-slate-900 font-bold shadow-sm';
-          if (activeMb) activeMb.className = 'flex flex-col items-center gap-0.5 text-slate-900 font-bold';
+      if (tabName === 'calendar' && calendarInstance) {
+        setTimeout(() => calendarInstance.render(), 100);
+      } else if (tabName === 'tasks') {
+        renderAnalytics();
+      }
+    }
 
-          const titleEl = document.getElementById('mobile-header-title');
-          if (titleEl) titleEl.innerText = tab.title;
+    /* --- Gemini AI アシスタント --- */
+    function initGeminiLauncher() {
+      document.getElementById('send-to-gemini-btn')?.addEventListener('click', async () => {
+        const input = document.getElementById('task-title-input').value.trim();
+        if (!input) return alert('課題名を入力してください！');
 
-          if (tab.name === 'calendar' && calendarInstance) {
-            setTimeout(() => calendarInstance.updateSize(), 100);
-          }
-        };
-
-        document.getElementById(`tab-${tab.name}-pc`)?.addEventListener('click', switchTab);
-        document.getElementById(`tab-${tab.name}-mb`)?.addEventListener('click', switchTab);
+        const prompt = `あなたは大学・学校のTAです。課題「${input}」について、構成案・概要・執筆ステップを提示してください。`;
+        try {
+          await navigator.clipboard.writeText(prompt);
+          alert('指示文をコピーしました！Geminiが開いたら Ctrl+V (Cmd+V) で貼り付けてください。');
+        } catch (e) {}
+        window.open('https://gemini.google.com/app', '_blank');
       });
     }
 
+    /* --- Firebase リアルタイム同期（チャット & 黒板） --- */
+    function initFirebaseListeners() {
+      // 1. チャット受信
+      const chatQuery = query(collection(db, "chats"), orderBy("timestamp", "asc"), limit(50));
+      onSnapshot(chatQuery, (snapshot) => {
+        const container = document.getElementById('chat-messages-container');
+        if (!container) return;
+        container.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const isMe = data.sender === userName;
+          const div = document.createElement('div');
+          div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+          div.innerHTML = `
+            <span class="text-[10px] text-slate-400 px-1">${escapeHtml(data.sender || '匿名')}</span>
+            <div class="px-3 py-2 rounded-xl text-xs max-w-[80%] ${isMe ? 'bg-slate-900 text-white rounded-br-none' : 'bg-white border text-slate-800 rounded-bl-none shadow-sm'}">
+              ${escapeHtml(data.message)}
+            </div>
+          `;
+          container.appendChild(div);
+        });
+        container.scrollTop = container.scrollHeight;
+      });
+
+      // 2. 黒板掲示板受信
+      const boardQuery = query(collection(db, "board_items"), orderBy("date", "asc"));
+      onSnapshot(boardQuery, (snapshot) => {
+        boardItems = [];
+        const container = document.getElementById('board-items-container');
+        if (!container) return;
+        container.innerHTML = '';
+        if (snapshot.empty) {
+          container.innerHTML = `<div class="col-span-full text-center chalk-text-white py-8 text-xs">現在、黒板の連絡事項はありません。</div>`;
+          return;
+        }
+        snapshot.forEach((doc) => {
+          const item = { id: doc.id, ...doc.data() };
+          boardItems.push(item);
+
+          const card = document.createElement('div');
+          card.className = "bg-amber-950/40 border border-amber-600/40 p-3 rounded-xl relative space-y-1.5";
+          card.innerHTML = `
+            <div class="flex justify-between items-start">
+              <span class="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/20 chalk-text-yellow border border-amber-500/40">${escapeHtml(item.type)}</span>
+              <span class="text-[10px] chalk-text-white opacity-70">${item.date ? item.date.replace('T', ' ') : ''}</span>
+            </div>
+            <h4 class="font-bold text-sm chalk-text-white">${escapeHtml(item.title)}</h4>
+            <p class="text-xs chalk-text-white opacity-90 leading-relaxed">${escapeHtml(item.content || '')}</p>
+            <div class="text-[10px] chalk-text-white opacity-60 pt-1 text-right">投稿: ${escapeHtml(item.author || '匿名')}</div>
+          `;
+          container.appendChild(card);
+        });
+        if (calendarInstance) updateCalendarEvents();
+      });
+    }
+
+    async function sendChatMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      try {
+        await addDoc(collection(db, "chats"), {
+          sender: userName,
+          message: msg,
+          timestamp: serverTimestamp()
+        });
+        input.value = '';
+      } catch (err) {
+        console.error("チャット送信エラー:", err);
+      }
+    }
+
+    async function saveBoardItem(e) {
+      e.preventDefault();
+      const type = document.getElementById('boardType').value;
+      const title = document.getElementById('boardTitle').value;
+      const date = document.getElementById('boardDate').value;
+      const content = document.getElementById('boardContent').value;
+
+      try {
+        await addDoc(collection(db, "board_items"), {
+          type, title, date, content,
+          author: userName,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById('modalBoard').classList.add('hidden');
+        document.getElementById('boardForm').reset();
+      } catch (err) {
+        console.error("掲示投稿エラー:", err);
+      }
+    }
+
+    /* --- 個人課題管理 --- */
+    function setViewMode(mode) {
+      if (mode === 'kanban') {
+        document.getElementById('view-kanban').classList.remove('hidden');
+        document.getElementById('view-list').classList.add('hidden');
+      } else {
+        document.getElementById('view-kanban').classList.add('hidden');
+        document.getElementById('view-list').classList.remove('hidden');
+      }
+    }
+
+    function renderTasks() {
+      localStorage.setItem('edutask_tasks_v2', JSON.stringify(tasks));
+      syncUserProfileToFirebase();
+
+      ['todo', 'doing', 'submitted', 'done'].forEach(s => {
+        const el = document.getElementById(`container-${s}`);
+        if (el) el.innerHTML = '';
+      });
+
+      const listBody = document.getElementById('list-table-body');
+      if (listBody) listBody.innerHTML = '';
+
+      const searchQuery = (document.getElementById('searchQuery')?.value || '').toLowerCase();
+      const filterSubject = document.getElementById('filterSubject')?.value || 'ALL';
+      const counts = { todo: 0, doing: 0, submitted: 0, done: 0 };
+
+      const now = new Date();
+      tasks.forEach(task => {
+        if (filterSubject !== 'ALL' && task.subject !== filterSubject) return;
+        if (searchQuery && !task.title.toLowerCase().includes(searchQuery)) return;
+
+        if (counts[task.status] !== undefined) counts[task.status]++;
+
+        const isOverdue = new Date(task.dueDate) < now && task.status !== 'done' && task.status !== 'submitted';
+        const stConf = isOverdue ? statusConfig.overdue : (statusConfig[task.status] || statusConfig.todo);
+
+        // カンバンカード描画
+        const card = document.createElement('div');
+        card.className = `bg-white p-2.5 rounded-lg border border-slate-200 ${stConf.borderClass} space-y-1 shadow-sm text-xs`;
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${stConf.bg}">${isOverdue ? '期限超過' : stConf.label}</span>
+            <span class="text-[10px] text-slate-400">${escapeHtml(task.subject)}</span>
+          </div>
+          <div class="font-bold text-slate-800">${escapeHtml(task.title)}</div>
+          <div class="text-[10px] text-slate-400"><i class="fa-regular fa-clock"></i> ${(task.dueDate||'').replace('T',' ')}</div>
+          <div class="flex justify-end gap-2 pt-1 border-t text-[10px]">
+            <button class="btn-delete-task text-red-500" data-id="${task.id}">削除</button>
+          </div>
+        `;
+        const container = document.getElementById(`container-${task.status}`);
+        if (container) container.appendChild(card);
+
+        // リスト行描画
+        if (listBody) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="p-2.5"><span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${stConf.bg}">${isOverdue ? '期限超過' : stConf.label}</span></td>
+            <td class="p-2.5">${escapeHtml(task.subject)}</td>
+            <td class="p-2.5 font-bold text-slate-800">${escapeHtml(task.title)}</td>
+            <td class="p-2.5">${(task.dueDate||'').replace('T',' ')}</td>
+            <td class="p-2.5 text-right"><button class="btn-delete-task text-red-500" data-id="${task.id}">削除</button></td>
+          `;
+          listBody.appendChild(tr);
+        }
+      });
+
+      ['todo', 'doing', 'submitted', 'done'].forEach(s => {
+        const countEl = document.getElementById(`count-${s}`);
+        if (countEl) countEl.innerText = counts[s];
+      });
+
+      // 削除ボタンイベントバインド
+      document.querySelectorAll('.btn-delete-task').forEach(btn => {
+        btn.addEventListener('click', (e) => deleteTask(e.target.getAttribute('data-id')));
+      });
+
+      if (calendarInstance) updateCalendarEvents();
+      renderAnalytics();
+    }
+
+    function saveTask(e) {
+      e.preventDefault();
+      tasks.push({
+        id: Date.now().toString(),
+        title: document.getElementById('taskTitle').value,
+        subject: document.getElementById('taskSubject').value,
+        status: document.getElementById('taskStatus').value,
+        dueDate: document.getElementById('taskDueDate').value
+      });
+      renderTasks();
+      document.getElementById('modalTask').classList.add('hidden');
+      document.getElementById('taskForm').reset();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      renderTasks();
+    }
+
+    /* --- 課題進捗レポートグラフ描画 --- */
+    function renderAnalytics() {
+      const ctxStatus = document.getElementById('chart-status');
+      const ctxSubject = document.getElementById('chart-subject');
+      if (!ctxStatus || !ctxSubject) return;
+
+      if (statusChart) statusChart.destroy();
+      if (subjectChart) subjectChart.destroy();
+
+      const counts = { todo: 0, doing: 0, submitted: 0, done: 0 };
+      const subCounts = {};
+
+      tasks.forEach(t => {
+        if (counts[t.status] !== undefined) counts[t.status]++;
+        subCounts[t.subject] = (subCounts[t.subject] || 0) + 1;
+      });
+
+      statusChart = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+          labels: ['未着手', '進行中', '提出済み', '完了'],
+          datasets: [{ data: [counts.todo, counts.doing, counts.submitted, counts.done], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      subjectChart = new Chart(ctxSubject, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(subCounts),
+          datasets: [{ label: '課題数', data: Object.values(subCounts), backgroundColor: '#1e293b' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    /* --- 共有カレンダー --- */
+    function initCalendar() {
+      const calendarEl = document.getElementById('calendar');
+      if (!calendarEl) return;
+      calendarInstance = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ja',
+        height: 'auto',
+        headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+        events: getCalendarEvents()
+      });
+      calendarInstance.render();
+    }
+
+    function getCalendarEvents() {
+      const events = [];
+      boardItems.forEach(b => {
+        if (b.date) {
+          events.push({
+            title: `[黒板] ${b.title}`,
+            start: b.date,
+            backgroundColor: '#4f46e5',
+            borderColor: '#4f46e5'
+          });
+        }
+      });
+      tasks.forEach(t => {
+        if (t.dueDate) {
+          events.push({
+            title: `[課題] ${t.title}`,
+            start: t.dueDate,
+            backgroundColor: '#334155',
+            borderColor: '#334155'
+          });
+        }
+      });
+      return events;
+    }
+
+    function updateCalendarEvents() {
+      if (!calendarInstance) return;
+      calendarInstance.removeAllEvents();
+      calendarInstance.addEventSource(getCalendarEvents());
+    }
+
     function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
   </script>
 </body>

@@ -1172,7 +1172,6 @@
       downloadCSV(headers, rows, "eduportal_board");
     }
 
-    /* --- 管理者専用：チャット全件リセット --- */
     async function resetAllChats() {
       if (!confirm("【警告】クラスチャットの履歴をすべて削除（リセット）しますか？\n※この操作は取り消せません。必要であれば先にCSV出力を行ってください。")) {
         return;
@@ -1193,7 +1192,6 @@
       }
     }
 
-    /* --- 管理者専用：黒板掲示板全件リセット --- */
     async function resetAllBoard() {
       if (!confirm("【警告】黒板掲示板の投稿をすべて削除（リセット）しますか？\n※この操作は取り消せません。必要であれば先にCSV出力を行ってください。")) {
         return;
@@ -1225,7 +1223,6 @@
         if (e.target.classList.contains('btn-delete-task')) setTimeout(syncCurrentUser, 300);
       });
 
-      // URL末尾に ?admin=1 をつけた時だけ管理者メニューを表示
       if (new URLSearchParams(window.location.search).get('admin') === '1') {
         const box = document.createElement('div');
         box.className = 'fixed bottom-16 md:bottom-4 right-4 z-50 bg-slate-900 text-white p-2.5 rounded-2xl shadow-xl border border-slate-700 flex flex-col gap-1.5';
@@ -1251,6 +1248,408 @@
         document.getElementById('ext-reset-board').addEventListener('click', resetAllBoard);
       }
     });
+  </script>
+
+  <!-- ▼ ここから学習ツール拡張モジュール（タイマー・ToDoリスト・チェックリスト・メモ機能） ▼ -->
+  <script>
+    (function () {
+      const STORAGE_KEYS = {
+        todos: 'eduportal_ext_todos_v1',
+        checks: 'eduportal_ext_checks_v1',
+        memo: 'eduportal_ext_memo_v1'
+      };
+
+      let todos = JSON.parse(localStorage.getItem(STORAGE_KEYS.todos) || '[]');
+      let checks = JSON.parse(localStorage.getItem(STORAGE_KEYS.checks) || '[]');
+      let memoText = localStorage.getItem(STORAGE_KEYS.memo) || '';
+
+      // タイマー状態
+      let timerTotalSec = 25 * 60;
+      let timerRemainSec = 25 * 60;
+      let timerInterval = null;
+
+      function escapeStr(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function playAlarmBeep() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          [0, 0.25, 0.5].forEach(delay => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 880;
+            gain.gain.setValueAtTime(0.2, ctx.currentTime + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.2);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + delay);
+            osc.stop(ctx.currentTime + delay + 0.2);
+          });
+        } catch (e) {}
+      }
+
+      function formatTime(sec) {
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        return `${m}:${s}`;
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const isAdmin = new URLSearchParams(window.location.search).get('admin') === '1';
+        const btnBottomPos = isAdmin ? 'bottom-52 md:bottom-44' : 'bottom-16 md:bottom-5';
+
+        // フローティング起動ボタン
+        const launcher = document.createElement('button');
+        launcher.id = 'ext-study-tools-btn';
+        launcher.className = `fixed ${btnBottomPos} right-4 z-40 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-full shadow-lg flex items-center gap-2 transition`;
+        launcher.innerHTML = `<i class="fa-solid fa-toolbox"></i><span>学習ツール</span>`;
+        document.body.appendChild(launcher);
+
+        // ツールパネル本体（モーダル）
+        const panel = document.createElement('div');
+        panel.id = 'ext-study-tools-panel';
+        panel.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3';
+        panel.innerHTML = `
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 flex flex-col max-h-[88vh]">
+            <!-- ヘッダー -->
+            <div class="bg-slate-900 text-white px-4 py-3 flex justify-between items-center">
+              <div class="flex items-center gap-2 font-bold text-sm">
+                <i class="fa-solid fa-toolbox text-indigo-400"></i> パーソナル学習ツール
+              </div>
+              <button id="ext-tools-close" class="text-slate-400 hover:text-white text-base px-1">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <!-- 4機能切り替えタブ -->
+            <div class="grid grid-cols-4 bg-slate-100 p-1 border-b border-slate-200 text-xs font-bold">
+              <button data-ext-tab="timer" class="ext-tab-btn py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1">
+                <i class="fa-solid fa-stopwatch"></i> タイマー
+              </button>
+              <button data-ext-tab="todo" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+                <i class="fa-solid fa-list-ul"></i> ToDo
+              </button>
+              <button data-ext-tab="check" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+                <i class="fa-solid fa-square-check"></i> チェック
+              </button>
+              <button data-ext-tab="memo" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+                <i class="fa-solid fa-note-sticky"></i> メモ
+              </button>
+            </div>
+
+            <!-- コンテンツエリア -->
+            <div class="p-4 overflow-y-auto flex-1 space-y-4">
+
+              <!-- 1. タイマー -->
+              <div id="ext-pane-timer" class="ext-pane space-y-4 text-center">
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl py-6 px-4">
+                  <div id="ext-timer-label" class="text-xs font-bold text-slate-500 mb-1">集中タイマー (25分)</div>
+                  <div id="ext-timer-display" class="text-5xl font-mono font-extrabold text-slate-900 tracking-wider my-2">25:00</div>
+                  <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-4">
+                    <div id="ext-timer-bar" class="bg-indigo-600 h-full transition-all duration-300" style="width: 100%"></div>
+                  </div>
+                </div>
+
+                <div class="flex justify-center gap-2">
+                  <button id="ext-timer-start" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-play"></i> スタート
+                  </button>
+                  <button id="ext-timer-pause" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-pause"></i> 一時停止
+                  </button>
+                  <button id="ext-timer-reset" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i> リセット
+                  </button>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100 space-y-2">
+                  <div class="text-[11px] font-bold text-slate-500">プリセット / 時間設定（分）</div>
+                  <div class="flex flex-wrap justify-center gap-1.5">
+                    <button data-mins="25" data-label="集中タイマー (25分)" class="ext-preset-btn px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-bold">25分 (ポモドーロ)</button>
+                    <button data-mins="5" data-label="休憩タイマー (5分)" class="ext-preset-btn px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold">5分 (休憩)</button>
+                    <button data-mins="50" data-label="講義・演習 (50分)" class="ext-preset-btn px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold">50分</button>
+                  </div>
+                  <div class="flex justify-center items-center gap-2 pt-1">
+                    <input type="number" id="ext-custom-mins" min="1" max="180" placeholder="分数" class="w-20 border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-center outline-none">
+                    <button id="ext-set-custom-mins" class="bg-slate-800 text-white text-xs font-bold px-3 py-1 rounded-lg hover:bg-slate-700">セット</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. ToDoリスト -->
+              <div id="ext-pane-todo" class="ext-pane hidden space-y-3">
+                <form id="ext-todo-form" class="flex gap-1.5">
+                  <select id="ext-todo-priority" class="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white outline-none">
+                    <option value="high">高</option>
+                    <option value="mid" selected>中</option>
+                    <option value="low">低</option>
+                  </select>
+                  <input type="text" id="ext-todo-input" placeholder="今日やることを入力..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs outline-none">
+                  <button type="submit" class="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg text-xs">追加</button>
+                </form>
+                <div class="flex justify-between items-center text-[11px] text-slate-500">
+                  <span id="ext-todo-stats">残り 0 件</span>
+                  <button id="ext-todo-clear-done" class="text-rose-600 hover:underline">完了済みを一括削除</button>
+                </div>
+                <ul id="ext-todo-list" class="space-y-1.5 max-h-64 overflow-y-auto"></ul>
+              </div>
+
+              <!-- 3. チェックリスト -->
+              <div id="ext-pane-check" class="ext-pane hidden space-y-3">
+                <form id="ext-check-form" class="flex gap-1.5">
+                  <input type="text" id="ext-check-input" placeholder="持ち物・提出前の確認項目..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs outline-none">
+                  <button type="submit" class="bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs">追加</button>
+                </form>
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px] font-bold text-slate-600">
+                    <span>達成率</span>
+                    <span id="ext-check-progress-text">0% (0/0)</span>
+                  </div>
+                  <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="ext-check-progress-bar" class="bg-emerald-600 h-full transition-all" style="width: 0%"></div>
+                  </div>
+                </div>
+                <ul id="ext-check-list" class="space-y-1.5 max-h-60 overflow-y-auto"></ul>
+                <div class="text-right">
+                  <button id="ext-check-uncheck-all" class="text-[11px] text-slate-500 hover:text-slate-800 underline">すべてのチェックを外す</button>
+                </div>
+              </div>
+
+              <!-- 4. メモ機能 -->
+              <div id="ext-pane-memo" class="ext-pane hidden space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-[11px] text-slate-500"><i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i> 入力内容はブラウザに自動保存されます</span>
+                  <div class="flex gap-2">
+                    <button id="ext-memo-copy" class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">コピー</button>
+                    <button id="ext-memo-clear" class="text-[11px] bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded font-bold text-rose-600">クリア</button>
+                  </div>
+                </div>
+                <textarea id="ext-memo-textarea" rows="10" placeholder="授業の板書メモ、アイデア、URLなどを自由に書き留められます..." class="w-full border border-slate-300 rounded-xl p-3 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
+                <div class="text-right text-[10px] text-slate-400" id="ext-memo-count">0 文字</div>
+              </div>
+
+            </div>
+          </div>
+        `;
+        document.body.appendChild(panel);
+
+        // 開閉イベント
+        launcher.addEventListener('click', () => panel.classList.remove('hidden'));
+        document.getElementById('ext-tools-close').addEventListener('click', () => panel.classList.add('hidden'));
+        panel.addEventListener('click', (e) => { if (e.target === panel) panel.classList.add('hidden'); });
+
+        // タブ切替
+        document.querySelectorAll('.ext-tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-ext-tab');
+            document.querySelectorAll('.ext-tab-btn').forEach(b => {
+              b.className = 'ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1';
+            });
+            btn.className = 'ext-tab-btn py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1';
+            document.querySelectorAll('.ext-pane').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`ext-pane-${target}`).classList.remove('hidden');
+          });
+        });
+
+        /* --- タイマーロジック --- */
+        function updateTimerUI() {
+          document.getElementById('ext-timer-display').innerText = formatTime(timerRemainSec);
+          const pct = timerTotalSec > 0 ? (timerRemainSec / timerTotalSec) * 100 : 0;
+          document.getElementById('ext-timer-bar').style.width = `${pct}%`;
+        }
+
+        function setTimerMinutes(mins, label) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          timerTotalSec = mins * 60;
+          timerRemainSec = timerTotalSec;
+          if (label) document.getElementById('ext-timer-label').innerText = label;
+          updateTimerUI();
+        }
+
+        document.getElementById('ext-timer-start').addEventListener('click', () => {
+          if (timerInterval) return;
+          if (timerRemainSec <= 0) timerRemainSec = timerTotalSec;
+          timerInterval = setInterval(() => {
+            timerRemainSec--;
+            updateTimerUI();
+            if (timerRemainSec <= 0) {
+              clearInterval(timerInterval);
+              timerInterval = null;
+              playAlarmBeep();
+              alert('タイマーが終了しました！');
+            }
+          }, 1000);
+        });
+
+        document.getElementById('ext-timer-pause').addEventListener('click', () => {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        });
+
+        document.getElementById('ext-timer-reset').addEventListener('click', () => {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          timerRemainSec = timerTotalSec;
+          updateTimerUI();
+        });
+
+        document.querySelectorAll('.ext-preset-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            setTimerMinutes(Number(btn.getAttribute('data-mins')), btn.getAttribute('data-label'));
+          });
+        });
+
+        document.getElementById('ext-set-custom-mins').addEventListener('click', () => {
+          const val = parseInt(document.getElementById('ext-custom-mins').value, 10);
+          if (val && val > 0 && val <= 180) {
+            setTimerMinutes(val, `カスタムタイマー (${val}分)`);
+          }
+        });
+
+        /* --- ToDoロジック --- */
+        function renderTodos() {
+          localStorage.setItem(STORAGE_KEYS.todos, JSON.stringify(todos));
+          const listEl = document.getElementById('ext-todo-list');
+          listEl.innerHTML = '';
+          const badgeMap = {
+            high: '<span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-[10px]">高</span>',
+            mid: '<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[10px]">中</span>',
+            low: '<span class="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold text-[10px]">低</span>'
+          };
+          todos.forEach((item, idx) => {
+            const li = document.createElement('li');
+            li.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs';
+            li.innerHTML = `
+              <label class="flex items-center gap-2 cursor-pointer flex-1">
+                <input type="checkbox" ${item.done ? 'checked' : ''} data-idx="${idx}" class="ext-todo-chk rounded">
+                ${badgeMap[item.priority] || badgeMap.mid}
+                <span class="${item.done ? 'line-through text-slate-400' : 'text-slate-800 font-medium'}">${escapeStr(item.text)}</span>
+              </label>
+              <button data-idx="${idx}" class="ext-todo-del text-slate-400 hover:text-rose-600 ml-2"><i class="fa-solid fa-trash-can"></i></button>
+            `;
+            listEl.appendChild(li);
+          });
+          const rem = todos.filter(t => !t.done).length;
+          document.getElementById('ext-todo-stats').innerText = `残り ${rem} 件 / 全 ${todos.length} 件`;
+
+          listEl.querySelectorAll('.ext-todo-chk').forEach(chk => {
+            chk.addEventListener('change', (e) => {
+              const i = Number(e.target.getAttribute('data-idx'));
+              todos[i].done = e.target.checked;
+              renderTodos();
+            });
+          });
+          listEl.querySelectorAll('.ext-todo-del').forEach(del => {
+            del.addEventListener('click', (e) => {
+              const i = Number(e.currentTarget.getAttribute('data-idx'));
+              todos.splice(i, 1);
+              renderTodos();
+            });
+          });
+        }
+
+        document.getElementById('ext-todo-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const input = document.getElementById('ext-todo-input');
+          const priority = document.getElementById('ext-todo-priority').value;
+          if (!input.value.trim()) return;
+          todos.unshift({ text: input.value.trim(), priority, done: false });
+          input.value = '';
+          renderTodos();
+        });
+
+        document.getElementById('ext-todo-clear-done').addEventListener('click', () => {
+          todos = todos.filter(t => !t.done);
+          renderTodos();
+        });
+
+        /* --- チェックリストロジック --- */
+        function renderChecks() {
+          localStorage.setItem(STORAGE_KEYS.checks, JSON.stringify(checks));
+          const listEl = document.getElementById('ext-check-list');
+          listEl.innerHTML = '';
+          checks.forEach((item, idx) => {
+            const li = document.createElement('li');
+            li.className = 'flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs';
+            li.innerHTML = `
+              <label class="flex items-center gap-2 cursor-pointer flex-1">
+                <input type="checkbox" ${item.checked ? 'checked' : ''} data-idx="${idx}" class="ext-chk-box rounded text-emerald-600">
+                <span class="${item.checked ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeStr(item.text)}</span>
+              </label>
+              <button data-idx="${idx}" class="ext-chk-del text-slate-400 hover:text-rose-600 ml-2"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            listEl.appendChild(li);
+          });
+
+          const total = checks.length;
+          const doneCount = checks.filter(c => c.checked).length;
+          const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+          document.getElementById('ext-check-progress-text').innerText = `${pct}% (${doneCount}/${total})`;
+          document.getElementById('ext-check-progress-bar').style.width = `${pct}%`;
+
+          listEl.querySelectorAll('.ext-chk-box').forEach(box => {
+            box.addEventListener('change', (e) => {
+              const i = Number(e.target.getAttribute('data-idx'));
+              checks[i].checked = e.target.checked;
+              renderChecks();
+            });
+          });
+          listEl.querySelectorAll('.ext-chk-del').forEach(del => {
+            del.addEventListener('click', (e) => {
+              const i = Number(e.currentTarget.getAttribute('data-idx'));
+              checks.splice(i, 1);
+              renderChecks();
+            });
+          });
+        }
+
+        document.getElementById('ext-check-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const input = document.getElementById('ext-check-input');
+          if (!input.value.trim()) return;
+          checks.push({ text: input.value.trim(), checked: false });
+          input.value = '';
+          renderChecks();
+        });
+
+        document.getElementById('ext-check-uncheck-all').addEventListener('click', () => {
+          checks.forEach(c => c.checked = false);
+          renderChecks();
+        });
+
+        /* --- メモロジック --- */
+        const memoEl = document.getElementById('ext-memo-textarea');
+        const memoCountEl = document.getElementById('ext-memo-count');
+        memoEl.value = memoText;
+        memoCountEl.innerText = `${memoText.length} 文字`;
+
+        memoEl.addEventListener('input', () => {
+          localStorage.setItem(STORAGE_KEYS.memo, memoEl.value);
+          memoCountEl.innerText = `${memoEl.value.length} 文字`;
+        });
+
+        document.getElementById('ext-memo-copy').addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(memoEl.value);
+            alert('メモをクリップボードにコピーしました');
+          } catch (e) {}
+        });
+
+        document.getElementById('ext-memo-clear').addEventListener('click', () => {
+          if (confirm('メモの内容をすべて消去しますか？')) {
+            memoEl.value = '';
+            localStorage.setItem(STORAGE_KEYS.memo, '');
+            memoCountEl.innerText = '0 文字';
+          }
+        });
+
+        renderTodos();
+        renderChecks();
+      });
+    })();
   </script>
 </body>
 </html>

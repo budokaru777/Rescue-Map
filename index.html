@@ -1,671 +1,1168 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>スタサポ - EduPortal & Task Hub</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #f4f6f9;
-            --card-bg: #ffffff;
-            --text-color: #2b2b2b;
-            --text-muted: #6e6e6e;
-            --border-color: #e1e5eb;
-            --primary-color: #4a6cf7;
-            --teams-purple: #6264a7;
-            --chalkboard-green: #2d5a27;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>EduPortal & Class Hub Pro</title>
 
-        [data-theme="dark"] {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --text-muted: #aaaaaa;
-            --border-color: #333333;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.5);
-        }
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <!-- FullCalendar -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+  <style>
+    .fc-event { cursor: pointer; border-radius: 4px; padding: 2px 4px; font-size: 0.8rem; }
+    .status-border-todo { border-left: 4px solid #ef4444; }
+    .status-border-doing { border-left: 4px solid #f59e0b; }
+    .status-border-submitted { border-left: 4px solid #3b82f6; }
+    .status-border-done { border-left: 4px solid #10b981; }
+    .status-border-overdue { border-left: 4px solid #8b5cf6; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            min-height: 100vh;
-            padding-bottom: 70px; /* モバイル用ボトムナビの余白 */
-        }
+    /* 黒板デザイン風のスタイル */
+    .blackboard {
+      background-color: #1e3a2b;
+      color: #f8fafc;
+      border: 8px solid #854d0e;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+      font-family: 'Hiragino Sans', sans-serif;
+    }
+    .chalk-text-yellow { color: #fef08a; text-shadow: 0 0 2px rgba(254,240,138,0.5); }
+    .chalk-text-white { color: #f8fafc; text-shadow: 0 0 2px rgba(248,250,252,0.5); }
 
-        /* ヘッダー */
-        header {
-            background: var(--card-bg);
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        h1 {
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--primary-color);
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-icon {
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        /* アプリメインコンテナ */
-        .app-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-
-        /* ビュー（表示切り替え） */
-        .view-section {
-            display: none;
-        }
-        .view-section.active {
-            display: block;
-        }
-
-        /* カード・グリッド */
-        .grid-shortcuts {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-bottom: 1.5rem;
-        }
-
-        @media (max-width: 600px) {
-            .grid-shortcuts { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        .shortcut-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 0.8rem;
-            text-align: center;
-            text-decoration: none;
-            color: var(--text-color);
-            box-shadow: var(--shadow);
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .shortcut-card i {
-            font-size: 1.5rem;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        /* デジタル黒板掲示板 */
-        .chalkboard {
-            background: var(--chalkboard-green);
-            color: #ffffff;
-            border: 8px solid #8b5a2b;
-            border-radius: 12px;
-            padding: 1.2rem;
-            box-shadow: var(--shadow-hover);
-            margin-bottom: 1.5rem;
-        }
-
-        .chalkboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            border-bottom: 2px dashed rgba(255, 255, 255, 0.4);
-            padding-bottom: 0.5rem;
-        }
-
-        .board-cards {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        .board-item {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 0.8rem;
-            border-radius: 6px;
-            border-left: 4px solid #f1c40f;
-        }
-
-        .board-item .tag {
-            font-size: 0.75rem;
-            background: #f1c40f;
-            color: #333;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 4px;
-        }
-
-        /* Teams風 チャットコンテナ */
-        .teams-chat-layout {
-            display: flex;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            height: 550px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        /* サイドバー（チャット一覧） */
-        .chat-sidebar {
-            width: 300px;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-color);
-        }
-
-        @media (max-width: 650px) {
-            .chat-sidebar { width: 100%; }
-            .chat-main { display: none; width: 100%; }
-            .teams-chat-layout.mobile-chat-open .chat-sidebar { display: none; }
-            .teams-chat-layout.mobile-chat-open .chat-main { display: flex; }
-        }
-
-        .sidebar-header {
-            padding: 1rem;
-            font-weight: bold;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-room-list {
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .room-item {
-            padding: 0.8rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .room-item:hover, .room-item.active {
-            background: rgba(74, 108, 247, 0.1);
-        }
-
-        .avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: var(--teams-purple);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        .room-info {
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .room-name {
-            font-weight: 600;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .room-sub {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        /* チャット メイン領域 */
-        .chat-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--card-bg);
-        }
-
-        .chat-header {
-            padding: 0.8rem 1rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 1rem;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .msg-bubble {
-            max-width: 75%;
-            padding: 0.7rem 1rem;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-
-        .msg-bubble.received {
-            background: var(--bg-color);
-            align-self: flex-start;
-            border-bottom-left-radius: 2px;
-        }
-
-        .msg-bubble.sent {
-            background: var(--primary-color);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 2px;
-        }
-
-        .msg-meta {
-            font-size: 0.7rem;
-            margin-top: 3px;
-            opacity: 0.7;
-            text-align: right;
-        }
-
-        .chat-input-bar {
-            padding: 0.8rem;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 8px;
-        }
-
-        .chat-input-bar input {
-            flex: 1;
-            padding: 0.6rem 0.8rem;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            outline: none;
-        }
-
-        .btn-send {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        /* カレンダー & Gemini ボックス */
-        .calendar-frame {
-            width: 100%;
-            height: 450px;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-        }
-
-        .gemini-box {
-            background: linear-gradient(135deg, rgba(66,133,244,0.1), rgba(155,81,224,0.1));
-            border: 1px solid var(--primary-color);
-            border-radius: 12px;
-            padding: 1.2rem;
-        }
-
-        .gemini-input-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 0.8rem;
-        }
-
-        .gemini-input-group input {
-            flex: 1;
-            padding: 0.7rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
-
-        .btn-gemini-launch {
-            background: linear-gradient(135deg, #4285f4, #9b51e0);
-            color: white;
-            border: none;
-            padding: 0.7rem 1.2rem;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        /* ボトムナビゲーション (スマホ対応) */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 0;
-            z-index: 1000;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.7rem;
-            gap: 3px;
-            cursor: pointer;
-        }
-
-        .nav-item.active {
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-
-        .nav-item i {
-            font-size: 1.2rem;
-        }
-    </style>
+    /* スマホ向けスクロール調整 */
+    body { -webkit-tap-highlight-color: transparent; }
+    .pb-safe { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
+  </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col pb-20 md:pb-0">
 
-    <!-- ヘッダー -->
-    <header>
-        <h1><i class="fa-solid fa-graduation-cap"></i> スタサポ</h1>
-        <div class="header-actions">
-            <button class="btn-icon" id="theme-toggle"><i class="fa-solid fa-moon"></i></button>
-        </div>
-    </header>
+  <!-- Desktop Header (PC表示用) -->
+  <header class="bg-white text-slate-800 border-b border-slate-200 sticky top-0 z-30 shadow-sm hidden md:block">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-graduation-cap text-2xl text-slate-800"></i>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900">EduPortal & Class Hub</h1>
+      </div>
 
-    <div class="app-container">
+      <!-- Navigation Tabs (PC) -->
+      <nav class="flex space-x-1 bg-slate-100 p-1 rounded-lg text-sm font-medium border border-slate-200">
+        <button id="tab-portal-pc" class="tab-btn px-3 py-1.5 rounded-md bg-white text-slate-900 font-bold shadow-sm">
+          <i class="fa-solid fa-house mr-1.5"></i>ポータル
+        </button>
+        <button id="tab-board-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
+          <i class="fa-solid fa-chalkboard mr-1.5"></i>黒板掲示板
+        </button>
+        <button id="tab-chat-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
+          <i class="fa-solid fa-comments mr-1.5"></i>クラスチャット
+        </button>
+        <button id="tab-tasks-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
+          <i class="fa-solid fa-list-check mr-1.5"></i>個人課題
+        </button>
+        <button id="tab-calendar-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
+          <i class="fa-regular fa-calendar-days mr-1.5"></i>共有カレンダー
+        </button>
+      </nav>
 
-        <!-- ビュー 1: ホーム & 黒板 -->
-        <section id="view-home" class="view-section active">
-            <!-- ショートカット集約 -->
-            <div class="grid-shortcuts">
-                <a href="https://classroom.google.com" target="_blank" class="shortcut-card" style="border-top: 3px solid #0f9d58;">
-                    <i class="fa-solid fa-chalkboard-user" style="color: #0f9d58;"></i> Classroom
-                </a>
-                <a href="https://calendar.google.com" target="_blank" class="shortcut-card" style="border-top: 3px solid #4285f4;">
-                    <i class="fa-solid fa-calendar-days" style="color: #4285f4;"></i> カレンダー
-                </a>
-                <a href="https://teams.microsoft.com" target="_blank" class="shortcut-card" style="border-top: 3px solid #6264a7;">
-                    <i class="fa-solid fa-users" style="color: #6264a7;"></i> Teams
-                </a>
-                <a href="https://moodle.org" target="_blank" class="shortcut-card" style="border-top: 3px solid #f7931e;">
-                    <i class="fa-solid fa-graduation-cap" style="color: #f7931e;"></i> Moodle
-                </a>
-            </div>
-
-            <!-- みんなのデジタル黒板掲示板 -->
-            <div class="chalkboard">
-                <div class="chalkboard-header">
-                    <h2><i class="fa-solid fa-chalkboard"></i> クラス共有 デジタル黒板</h2>
-                    <button id="add-board-btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
-                        + 課題/連絡を追加
-                    </button>
-                </div>
-                <div class="board-cards" id="board-cards-list">
-                    <div class="board-item">
-                        <span class="tag">小テスト</span> <strong>情報科学演習 第4回</strong> (明日 23:59締切)
-                        <div style="font-size: 0.8rem; opacity: 0.9; margin-top: 2px;">※優秀な生徒が追加した情報がここにリアルタイム共有されます</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gemini Launcher -->
-            <div class="gemini-box">
-                <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Gemini 課題下書きランチャー</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
-                    課題名を入力すると指示文が自動コピーされ、公式 Gemini が起動します。
-                </p>
-                <div class="gemini-input-group">
-                    <input type="text" id="gemini-task-input" placeholder="課題名を入力 (例: 物理学レポート第3回)">
-                    <button class="btn-gemini-launch" id="gemini-launch-btn">
-                        <i class="fa-solid fa-copy"></i> コピーして Gemini 起動
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- ビュー 2: カレンダー -->
-        <section id="view-calendar" class="view-section">
-            <h2 style="margin-bottom: 1rem;"><i class="fa-solid fa-calendar-check" style="color: #4285f4;"></i> 共有提出カレンダー</h2>
-            <iframe id="calendar-iframe" class="calendar-frame" src="https://calendar.google.com/calendar/embed?src=rf24059q%40st.omu.ac.jp&ctz=Asia%2FTokyo"></iframe>
-        </section>
-
-        <!-- ビュー 3: Teams風 チャット（グループ & 個人DM） -->
-        <section id="view-chat" class="view-section">
-            <div class="teams-chat-layout" id="teams-chat-box">
-                
-                <!-- チャットサイドバー -->
-                <div class="chat-sidebar">
-                    <div class="sidebar-header">
-                        <span><i class="fa-solid fa-comments"></i> チャット</span>
-                        <i class="fa-solid fa-pen-to-square" style="cursor: pointer;" title="新規個人チャット" id="btn-new-dm"></i>
-                    </div>
-                    <div class="chat-room-list" id="room-list">
-                        <!-- 全体グループ -->
-                        <div class="room-item active" onclick="switchChatRoom('group', '全体クラスグループ')">
-                            <div class="avatar" style="background: var(--teams-purple);"><i class="fa-solid fa-users"></i></div>
-                            <div class="room-info">
-                                <div class="room-name">全体クラスグループ</div>
-                                <div class="room-sub">全員への連絡・課題共有</div>
-                            </div>
-                        </div>
-                        <!-- 個人チャット例 -->
-                        <div class="room-item" onclick="switchChatRoom('dm_1', '山田 太郎')">
-                            <div class="avatar" style="background: #27ae60;">山</div>
-                            <div class="room-info">
-                                <div class="room-name">山田 太郎</div>
-                                <div class="room-sub">個人チャット</div>
-                            </div>
-                        </div>
-                        <div class="room-item" onclick="switchChatRoom('dm_2', '佐藤 花子')">
-                            <div class="avatar" style="background: #e67e22;">佐</div>
-                            <div class="room-info">
-                                <div class="room-name">佐藤 花子</div>
-                                <div class="room-sub">個人チャット</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- チャットメインエリア -->
-                <div class="chat-main">
-                    <div class="chat-header">
-                        <button class="btn-icon" id="back-to-rooms" style="display: none; font-size: 1rem;"><i class="fa-solid fa-arrow-left"></i></button>
-                        <h4 id="current-room-title">全体クラスグループ</h4>
-                    </div>
-
-                    <div class="chat-messages" id="chat-messages-list">
-                        <div class="msg-bubble received">
-                            <strong>山田 太郎</strong><br>
-                            今日の物理の小テスト範囲ってどこだっけ？
-                            <div class="msg-meta">12:30</div>
-                        </div>
-                        <div class="msg-bubble sent">
-                            教科書のP.45〜60だよ！黒板にも追加しておいた！
-                            <div class="msg-meta">12:32</div>
-                        </div>
-                    </div>
-
-                    <div class="chat-input-bar">
-                        <input type="text" id="chat-message-input" placeholder="メッセージを入力...">
-                        <button class="btn-send" id="send-msg-btn"><i class="fa-solid fa-paper-plane"></i></button>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
+      <div class="flex items-center gap-2">
+        <!-- 常時表示される黒板投稿ボタン (PC) -->
+        <button id="btn-header-board-pc" class="bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm transition">
+          <i class="fa-solid fa-chalkboard-user"></i> 黒板に投稿
+        </button>
+        <span id="user-display-name-pc" class="text-xs text-slate-500 font-bold ml-1"></span>
+        <button id="btn-open-name-modal-pc" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1.5 rounded-lg border">名前変更</button>
+      </div>
     </div>
+  </header>
 
-    <!-- モバイル ボトムナビゲーション -->
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('home')">
-            <i class="fa-solid fa-house"></i>
-            <span>ホーム/黒板</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('calendar')">
-            <i class="fa-solid fa-calendar-days"></i>
-            <span>カレンダー</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('chat')">
-            <i class="fa-solid fa-comments"></i>
-            <span>チャット</span>
-        </div>
-    </nav>
+  <!-- Mobile Top Header (スマホ表示用) -->
+  <header class="bg-white text-slate-900 border-b border-slate-200 px-3 py-2.5 sticky top-0 z-30 flex justify-between items-center md:hidden shadow-sm">
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-graduation-cap text-lg text-slate-800"></i>
+      <span class="font-bold text-sm tracking-tight" id="mobile-header-title">ポータル</span>
+    </div>
+    
+    <div class="flex items-center gap-1.5">
+      <!-- 常時表示される黒板投稿ボタン (スマホ) -->
+      <button id="btn-header-board-mb" class="bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
+        <i class="fa-solid fa-plus"></i> 黒板投稿
+      </button>
+      <button id="btn-open-name-modal-mb" class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md border text-slate-700 flex items-center gap-1">
+        <i class="fa-solid fa-user"></i> <span id="user-display-name-mb">名前</span>
+      </button>
+    </div>
+  </header>
 
-    <script>
-        // タブ切り替え制御
-        function switchTab(tabName) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 flex-grow w-full">
 
-            if (tabName === 'home') {
-                document.getElementById('view-home').classList.add('active');
-                document.querySelectorAll('.nav-item')[0].classList.add('active');
-            } else if (tabName === 'calendar') {
-                document.getElementById('view-calendar').classList.add('active');
-                document.querySelectorAll('.nav-item')[1].classList.add('active');
-            } else if (tabName === 'chat') {
-                document.getElementById('view-chat').classList.add('active');
-                document.querySelectorAll('.nav-item')[2].classList.add('active');
+    <!-- 0. ポータル（ショートカット, Gemini 連携, 埋め込み Google カレンダー） -->
+    <section id="section-portal" class="tab-content block space-y-4 md:space-y-6">
+      
+      <!-- ショートカットカード ヘッダー＆設定ボタン -->
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm md:text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-bookmark text-indigo-600"></i> ショートカット
+        </h2>
+        <button id="btn-open-shortcut-modal" class="text-xs bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+          <i class="fa-solid fa-gear text-slate-500"></i> カスタムリンク設定
+        </button>
+      </div>
+
+      <!-- ショートカットカード (Classroom / Teams 固定、後半2つはカスタム) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <!-- 1. Google Classroom (固定) -->
+        <a href="https://classroom.google.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+          <i class="fa-solid fa-chalkboard-user text-3xl md:text-4xl text-emerald-600 mb-1.5 md:mb-2"></i>
+          <span class="font-bold text-slate-800 text-sm md:text-base">Classroom</span>
+        </a>
+
+        <!-- 2. Microsoft Teams (固定) -->
+        <a href="https://teams.microsoft.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+          <i class="fa-solid fa-users text-3xl md:text-4xl text-indigo-600 mb-1.5 md:mb-2"></i>
+          <span class="font-bold text-slate-800 text-sm md:text-base">Teams</span>
+        </a>
+
+        <!-- 3. カスタムショートカット 1 -->
+        <a id="shortcut-card-3" href="https://calendar.google.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+          <i class="fa-solid fa-globe text-3xl md:text-4xl text-blue-600 mb-1.5 md:mb-2"></i>
+          <span id="shortcut-label-3" class="font-bold text-slate-800 text-sm md:text-base">Googleカレンダー</span>
+        </a>
+
+        <!-- 4. カスタムショートカット 2 -->
+        <a id="shortcut-card-4" href="https://moodle.org" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+          <i class="fa-solid fa-graduation-cap text-3xl md:text-4xl text-amber-500 mb-1.5 md:mb-2"></i>
+          <span id="shortcut-label-4" class="font-bold text-slate-800 text-sm md:text-base">Moodle</span>
+        </a>
+      </div>
+
+      <!-- Gemini AI 課題アシスタント -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 md:p-6 shadow-sm space-y-3">
+        <h3 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> Gemini AI 課題アシスタント
+        </h3>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          課題名を入力してボタンを押すと、構成案や骨子を作成する指示文が自動コピーされ Gemini が起動します。
+        </p>
+        <div class="flex flex-col sm:flex-row gap-2 md:gap-3 pt-1">
+          <input type="text" id="task-title-input" placeholder="例: 情報科学演習 レポート第2回" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none">
+          <button id="send-to-gemini-btn" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+            <i class="fa-solid fa-copy"></i> Geminiを起動
+          </button>
+        </div>
+      </div>
+
+      <!-- 埋め込み Google カレンダー -->
+      <div class="bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-calendar-check text-blue-600"></i> Google カレンダー埋め込み表示
+          </h2>
+          <span id="cal-status-text" class="text-xs text-slate-500"></span>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label for="calendar-id" class="text-xs font-bold text-slate-600 whitespace-nowrap">カレンダーID (メールアドレス):</label>
+          <input type="email" id="calendar-id" placeholder="rf24059q@st.omu.ac.jp" class="flex-1 border border-slate-300 rounded px-3 py-1 text-xs outline-none bg-white">
+          <button id="btn-save-calendar-settings" class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-slate-700 whitespace-nowrap">保存</button>
+        </div>
+
+        <div class="w-full h-[350px] md:h-[450px] border border-slate-200 rounded-lg overflow-hidden">
+          <iframe id="calendar-iframe" src="about:blank" class="w-full h-full border-none"></iframe>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 1. クラスの黒板掲示板（すべての連絡・予定共有） -->
+    <section id="section-board" class="tab-content hidden space-y-4">
+      <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200">
+        <div>
+          <h2 class="font-bold text-slate-900 text-sm md:text-base">クラス黒板掲示板</h2>
+          <p class="text-xs text-slate-500">小テスト・課題締切・行事・授業変更など全連絡をリアルタイム共有</p>
+        </div>
+        <button id="btn-open-board-modal" class="bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-plus"></i> 掲示板に投稿
+        </button>
+      </div>
+
+      <!-- 黒板風デザインエリア -->
+      <div class="blackboard p-4 md:p-6 rounded-2xl min-h-[400px]">
+        <div class="flex items-center justify-between border-b border-amber-700/60 pb-3 mb-4">
+          <span class="chalk-text-yellow font-bold text-base md:text-lg flex items-center gap-2">
+            <i class="fa-solid fa-thumbtack"></i> 連絡事項・行事・小テスト一覧
+          </span>
+          <span class="text-xs chalk-text-white opacity-80">リアルタイム同期中</span>
+        </div>
+
+        <div id="board-items-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="text-center chalk-text-white py-12 text-sm">読み込み中...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. リアルタイムクラスチャット -->
+    <section id="section-chat" class="tab-content hidden">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[75vh]">
+        <!-- Chat Header -->
+        <div class="p-3.5 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl shrink-0">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-comments text-indigo-600"></i>
+            <span class="font-bold text-sm md:text-base text-slate-800">クラスチャット</span>
+          </div>
+          <span class="text-xs text-slate-500" id="chat-user-count">リアルタイム同期中</span>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div id="chat-messages-container" class="flex-1 p-3 md:p-4 overflow-y-auto space-y-3 bg-slate-50/50 min-h-0">
+          <div class="text-center text-slate-400 text-xs py-8">メッセージを読み込んでいます...</div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="chat-form" class="p-2 md:p-3 bg-white border-t border-slate-200 flex gap-2 rounded-b-xl shrink-0">
+          <input type="text" id="chat-input" placeholder="メッセージを入力..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-400">
+          <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-1">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. 個人課題管理 & 進捗レポートグラフ -->
+    <section id="section-tasks" class="tab-content hidden space-y-4">
+      <div class="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-center justify-between">
+        <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
+          <input type="text" id="searchQuery" placeholder="検索..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs md:text-sm outline-none w-full md:w-48">
+          <select id="filterSubject" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white">
+            <option value="ALL">全教科</option>
+            <option value="数学">数学</option>
+            <option value="英語">英語</option>
+            <option value="国語">国語</option>
+            <option value="理科">理科</option>
+            <option value="社会">社会</option>
+            <option value="情報/その他">情報/その他</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+          <div class="flex items-center gap-1">
+            <button id="btn-kanban" class="px-2.5 py-1 rounded-lg border text-xs bg-slate-100 font-bold">カンバン</button>
+            <button id="btn-list" class="px-2.5 py-1 rounded-lg border text-xs bg-white text-slate-600">リスト</button>
+          </div>
+          <button id="btn-open-task-modal" class="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1">
+            <i class="fa-solid fa-plus"></i> 追加
+          </button>
+        </div>
+      </div>
+
+      <!-- KANBAN BOARD -->
+      <div id="view-kanban" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-slate-100/70 p-3 rounded-xl border border-slate-200">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-slate-700 text-xs flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>未着手</h3>
+            <span id="count-todo" class="bg-white border text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">0</span>
+          </div>
+          <div id="container-todo" class="space-y-2 min-h-[150px]"></div>
+        </div>
+
+        <div class="bg-slate-100/70 p-3 rounded-xl border border-slate-200">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-slate-700 text-xs flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>進行中</h3>
+            <span id="count-doing" class="bg-white border text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">0</span>
+          </div>
+          <div id="container-doing" class="space-y-2 min-h-[150px]"></div>
+        </div>
+
+        <div class="bg-slate-100/70 p-3 rounded-xl border border-slate-200">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-slate-700 text-xs flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>提出済み</h3>
+            <span id="count-submitted" class="bg-white border text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">0</span>
+          </div>
+          <div id="container-submitted" class="space-y-2 min-h-[150px]"></div>
+        </div>
+
+        <div class="bg-slate-100/70 p-3 rounded-xl border border-slate-200">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-slate-700 text-xs flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>完了</h3>
+            <span id="count-done" class="bg-white border text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">0</span>
+          </div>
+          <div id="container-done" class="space-y-2 min-h-[150px]"></div>
+        </div>
+      </div>
+
+      <!-- LIST VIEW -->
+      <div id="view-list" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-600">
+          <thead class="bg-slate-50 text-slate-700 font-bold border-b">
+            <tr>
+              <th class="p-2.5">状況</th>
+              <th class="p-2.5">教科</th>
+              <th class="p-2.5">タイトル</th>
+              <th class="p-2.5">締切日時</th>
+              <th class="p-2.5 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody id="list-table-body" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+
+      <!-- 課題進捗統計グラフエリア -->
+      <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-indigo-600"></i> 課題の進捗レポート & 負荷分析
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          <div class="flex flex-col items-center">
+            <span class="text-xs font-bold text-slate-500 mb-2">ステータス分布</span>
+            <div class="w-48 h-48 md:w-56 md:h-56"><canvas id="chart-status"></canvas></div>
+          </div>
+          <div class="flex flex-col items-center">
+            <span class="text-xs font-bold text-slate-500 mb-2">教科別 課題数</span>
+            <div class="w-full h-48 md:h-56"><canvas id="chart-subject"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 共有カレンダー -->
+    <section id="section-calendar" class="tab-content hidden">
+      <div class="bg-white p-3 md:p-5 rounded-xl shadow-sm border border-slate-200">
+        <div class="text-xs text-slate-500 mb-3 flex items-center gap-2">
+          <span class="inline-block w-3 h-3 bg-indigo-600 rounded"></span> 黒板掲示板の予定
+          <span class="inline-block w-3 h-3 bg-slate-700 rounded ml-2"></span> 個人課題の締切
+        </div>
+        <div id="calendar" class="text-xs md:text-sm"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation (スマホ専用ボトムバー) -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-1.5 z-40 flex justify-around items-center shadow-lg">
+    <button id="tab-portal-mb" class="flex flex-col items-center gap-0.5 text-slate-900 font-bold">
+      <i class="fa-solid fa-house text-lg"></i>
+      <span class="text-[10px]">ポータル</span>
+    </button>
+    <button id="tab-board-mb" class="flex flex-col items-center gap-0.5 text-slate-500">
+      <i class="fa-solid fa-chalkboard text-lg"></i>
+      <span class="text-[10px]">黒板掲示</span>
+    </button>
+    <button id="tab-chat-mb" class="flex flex-col items-center gap-0.5 text-slate-500 relative">
+      <i class="fa-solid fa-comments text-lg"></i>
+      <span class="text-[10px]">チャット</span>
+    </button>
+    <button id="tab-tasks-mb" class="flex flex-col items-center gap-0.5 text-slate-500">
+      <i class="fa-solid fa-list-check text-lg"></i>
+      <span class="text-[10px]">課題</span>
+    </button>
+    <button id="tab-calendar-mb" class="flex flex-col items-center gap-0.5 text-slate-500">
+      <i class="fa-regular fa-calendar-days text-lg"></i>
+      <span class="text-[10px]">カレンダー</span>
+    </button>
+  </nav>
+
+  <!-- Modal: カスタムショートカットリンク設定 -->
+  <div id="modalShortcut" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
+      <div class="bg-indigo-900 px-4 py-3 text-white flex justify-between items-center">
+        <h3 class="font-bold text-sm">カスタムリンクの設定</h3>
+        <button id="btn-close-shortcut-modal" class="text-indigo-200 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="p-4 space-y-4">
+        <p class="text-xs text-slate-500">Classroom と Teams 以外の残り2つのショートカットリンクを自由に変更できます。</p>
+        
+        <!-- カード3の設定 -->
+        <div class="p-3 bg-slate-50 rounded-lg border space-y-2">
+          <span class="text-xs font-bold text-indigo-700">ショートカット 3</span>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">表示名</label>
+            <input type="text" id="shortcut-name-3" placeholder="例: Googleカレンダー" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">URL</label>
+            <input type="url" id="shortcut-url-3" placeholder="https://calendar.google.com" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+          </div>
+        </div>
+
+        <!-- カード4の設定 -->
+        <div class="p-3 bg-slate-50 rounded-lg border space-y-2">
+          <span class="text-xs font-bold text-indigo-700">ショートカット 4</span>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">表示名</label>
+            <input type="text" id="shortcut-name-4" placeholder="例: Moodle" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">URL</label>
+            <input type="url" id="shortcut-url-4" placeholder="https://moodle.org" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button id="btn-cancel-shortcut-modal" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
+          <button id="btn-save-shortcut-modal" class="px-3 py-1.5 bg-indigo-900 text-white rounded-lg text-xs font-bold">設定を保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: 個人課題追加・編集 -->
+  <div id="modalTask" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
+      <div class="bg-slate-900 px-4 py-3 text-white flex justify-between items-center">
+        <h3 id="modalTitle" class="font-bold text-sm">課題の追加</h3>
+        <button id="btn-close-task-modal" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="taskForm" class="p-4 space-y-3">
+        <input type="hidden" id="taskId">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">タイトル *</label>
+          <input type="text" id="taskTitle" required class="w-full border p-2 rounded-lg text-xs outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">教科</label>
+            <select id="taskSubject" class="w-full border p-2 rounded-lg text-xs outline-none bg-white">
+              <option value="数学">数学</option>
+              <option value="英語">英語</option>
+              <option value="国語">国語</option>
+              <option value="理科">理科</option>
+              <option value="社会">社会</option>
+              <option value="情報/その他">情報/その他</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">進行状況</label>
+            <select id="taskStatus" class="w-full border p-2 rounded-lg text-xs outline-none bg-white">
+              <option value="todo">未着手</option>
+              <option value="doing">進行中</option>
+              <option value="submitted">提出済み</option>
+              <option value="done">完了</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">締切日時 *</label>
+          <input type="datetime-local" id="taskDueDate" required class="w-full border p-2 rounded-lg text-xs outline-none">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" id="btn-cancel-task-modal" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
+          <button type="submit" class="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: 黒板掲示の投稿 -->
+  <div id="modalBoard" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
+      <div class="bg-emerald-900 px-4 py-3 text-white flex justify-between items-center">
+        <h3 class="font-bold text-sm">黒板に連絡・予定を投稿</h3>
+        <button id="btn-close-board-modal" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="boardForm" class="p-4 space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">連絡種別 *</label>
+          <select id="boardType" class="w-full border p-2 rounded-lg text-xs outline-none bg-white">
+            <option value="小テスト">✏️ 小テスト告知</option>
+            <option value="プリント・課題">📄 プリント・課題締切</option>
+            <option value="行事・イベント">🎉 行事・イベント予定</option>
+            <option value="全体連絡">📢 全体連絡・お知らせ</option>
+            <option value="授業変更">🏫 授業変更・補講</option>
+            <option value="その他">📌 その他</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">タイトル / 科目名 *</label>
+          <input type="text" id="boardTitle" required placeholder="例: 数学I 復習小テスト / 文化祭準備" class="w-full border p-2 rounded-lg text-xs outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">実施・提出・イベント日時 *</label>
+          <input type="datetime-local" id="boardDate" required class="w-full border p-2 rounded-lg text-xs outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">詳細・メモ・持ち物など</label>
+          <textarea id="boardContent" rows="3" placeholder="教科書 P.20〜35 範囲 / 体育館集合" class="w-full border p-2 rounded-lg text-xs outline-none"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" id="btn-cancel-board-modal" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
+          <button type="submit" class="px-3 py-1.5 bg-emerald-800 text-white rounded-lg text-xs font-bold">黒板に書き込む</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: ユーザー名設定 -->
+  <div id="modalName" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-xs p-4 space-y-3 border">
+      <h3 class="font-bold text-sm text-slate-800">表示名の設定</h3>
+      <input type="text" id="userNameInput" placeholder="例: 山田太郎" class="w-full border p-2 rounded-lg text-xs outline-none">
+      <div class="flex justify-end gap-2">
+        <button id="btn-save-username" class="w-full py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold">決定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase v9 (Modular SDK) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      query, 
+      orderBy, 
+      limit, 
+      onSnapshot, 
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDgjxiw-m0Vgk1X-yWRKrGsjXTAS4ZpDAM",
+      authDomain: "telephone-99ed5.firebaseapp.com",
+      projectId: "telephone-99ed5",
+      storageBucket: "telephone-99ed5.firebasestorage.app",
+      messagingSenderId: "609918192167",
+      appId: "1:609918192167:web:4361772de1f08b029edc02",
+      measurementId: "G-VBNN97R90E"
+    };
+
+    // Initialize Firebase & Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    /* --- アプリ状態管理 --- */
+    let userName = localStorage.getItem('edutask_username') || ('生徒' + Math.floor(Math.random() * 899 + 100));
+    let tasks = JSON.parse(localStorage.getItem('edutask_tasks_v2')) || [
+      { id: '1', title: '【例】数学ワーク 提出', subject: '数学', status: 'todo', dueDate: '2026-10-30T23:59' }
+    ];
+    let boardItems = [];
+    let calendarInstance = null;
+    let statusChart = null;
+    let subjectChart = null;
+
+    const statusConfig = {
+      todo: { label: '未着手', bg: 'bg-red-50 text-red-700', borderClass: 'status-border-todo' },
+      doing: { label: '進行中', bg: 'bg-amber-50 text-amber-700', borderClass: 'status-border-doing' },
+      submitted: { label: '提出済み', bg: 'bg-blue-50 text-blue-700', borderClass: 'status-border-submitted' },
+      done: { label: '完了', bg: 'bg-emerald-50 text-emerald-700', borderClass: 'status-border-done' },
+      overdue: { label: '期限超過', bg: 'bg-purple-50 text-purple-700', borderClass: 'status-border-overdue' }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateUserDisplayName();
+      initShortcuts();
+      renderTasks();
+      initGeminiLauncher();
+      initEmbedCalendar();
+      initFirebaseListeners();
+      initCalendar();
+      setupEventListeners();
+    });
+
+    /* --- ショートカットリンク管理 --- */
+    function initShortcuts() {
+      const sc3 = JSON.parse(localStorage.getItem('edutask_sc_3')) || { name: 'Googleカレンダー', url: 'https://calendar.google.com' };
+      const sc4 = JSON.parse(localStorage.getItem('edutask_sc_4')) || { name: 'Moodle', url: 'https://moodle.org' };
+
+      updateShortcutCard(3, sc3.name, sc3.url);
+      updateShortcutCard(4, sc4.name, sc4.url);
+    }
+
+    function updateShortcutCard(num, name, url) {
+      const card = document.getElementById(`shortcut-card-${num}`);
+      const label = document.getElementById(`shortcut-label-${num}`);
+      if (card) card.href = url || '#';
+      if (label) label.innerText = name || `リンク ${num}`;
+    }
+
+    function openShortcutModal() {
+      const sc3 = JSON.parse(localStorage.getItem('edutask_sc_3')) || { name: 'Googleカレンダー', url: 'https://calendar.google.com' };
+      const sc4 = JSON.parse(localStorage.getItem('edutask_sc_4')) || { name: 'Moodle', url: 'https://moodle.org' };
+
+      document.getElementById('shortcut-name-3').value = sc3.name;
+      document.getElementById('shortcut-url-3').value = sc3.url;
+      document.getElementById('shortcut-name-4').value = sc4.name;
+      document.getElementById('shortcut-url-4').value = sc4.url;
+
+      document.getElementById('modalShortcut').classList.remove('hidden');
+    }
+
+    function saveShortcutSettings() {
+      const sc3 = {
+        name: document.getElementById('shortcut-name-3').value.trim() || 'リンク 3',
+        url: document.getElementById('shortcut-url-3').value.trim() || 'https://'
+      };
+      const sc4 = {
+        name: document.getElementById('shortcut-name-4').value.trim() || 'リンク 4',
+        url: document.getElementById('shortcut-url-4').value.trim() || 'https://'
+      };
+
+      localStorage.setItem('edutask_sc_3', JSON.stringify(sc3));
+      localStorage.setItem('edutask_sc_4', JSON.stringify(sc4));
+
+      updateShortcutCard(3, sc3.name, sc3.url);
+      updateShortcutCard(4, sc4.name, sc4.url);
+
+      document.getElementById('modalShortcut').classList.add('hidden');
+    }
+
+    /* --- Gemini 連携機能 --- */
+    function initGeminiLauncher() {
+      const btn = document.getElementById('send-to-gemini-btn');
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const titleInput = document.getElementById('task-title-input');
+        const title = titleInput ? titleInput.value.trim() : '';
+        const promptText = title
+          ? `以下の課題のレポート構成案、アウトライン、調査ポイントを作成してください。\n課題名: 「${title}」`
+          : `課題のレポート構成案、アウトライン、調査ポイントを作成してください。`;
+
+        navigator.clipboard.writeText(promptText).then(() => {
+          alert('Gemini への指示文をクリップボードにコピーしました！\nGemini が開いたら貼り付けて送信してください。');
+          window.open('https://gemini.google.com', '_blank');
+        }).catch(() => {
+          window.open('https://gemini.google.com', '_blank');
+        });
+      });
+    }
+
+    /* --- Google カレンダー埋め込み機能 --- */
+    function initEmbedCalendar() {
+      const savedId = localStorage.getItem('edutask_calendar_id') || 'rf24059q@st.omu.ac.jp';
+      const input = document.getElementById('calendar-id');
+      if (input) input.value = savedId;
+      updateCalendarIframe(savedId);
+
+      const saveBtn = document.getElementById('btn-save-calendar-settings');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+          const newId = input ? input.value.trim() : '';
+          if (newId) {
+            localStorage.setItem('edutask_calendar_id', newId);
+            updateCalendarIframe(newId);
+            const status = document.getElementById('cal-status-text');
+            if (status) {
+              status.innerText = '保存しました';
+              setTimeout(() => { status.innerText = ''; }, 3000);
             }
+          }
+        });
+      }
+    }
+
+    function updateCalendarIframe(calId) {
+      const iframe = document.getElementById('calendar-iframe');
+      if (iframe) {
+        const encodedId = encodeURIComponent(calId);
+        iframe.src = `https://calendar.google.com/calendar/embed?src=${encodedId}&ctz=Asia%2FTokyo`;
+      }
+    }
+
+    /* --- ユーザー表示名設定 --- */
+    function updateUserDisplayName() {
+      const pcLabel = document.getElementById('user-display-name-pc');
+      const mbLabel = document.getElementById('user-display-name-mb');
+      if (pcLabel) pcLabel.innerText = userName;
+      if (mbLabel) mbLabel.innerText = userName;
+    }
+
+    function saveUserName() {
+      const input = document.getElementById('userNameInput');
+      if (input && input.value.trim() !== '') {
+        userName = input.value.trim();
+        localStorage.setItem('edutask_username', userName);
+        updateUserDisplayName();
+        document.getElementById('modalName').classList.add('hidden');
+      }
+    }
+
+    /* --- Firebase リアルタイム通信 (チャット & 黒板) --- */
+    function initFirebaseListeners() {
+      // 1. チャット受信
+      const chatQuery = query(collection(db, 'chats'), orderBy('createdAt', 'asc'), limit(100));
+      onSnapshot(chatQuery, (snapshot) => {
+        const chatContainer = document.getElementById('chat-messages-container');
+        if (!chatContainer) return;
+        chatContainer.innerHTML = '';
+
+        if (snapshot.empty) {
+          chatContainer.innerHTML = '<div class="text-center text-slate-400 text-xs py-8">まだメッセージがありません</div>';
+          return;
         }
 
-        // チャットルーム切り替え（Teams風 グループ/個人DM）
-        const chatBox = document.getElementById('teams-chat-box');
-        const currentRoomTitle = document.getElementById('current-room-title');
-        const backToRoomsBtn = document.getElementById('back-to-rooms');
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const isMe = data.userName === userName;
 
-        function switchChatRoom(roomId, roomTitle) {
-            currentRoomTitle.innerText = roomTitle;
-            
-            // モバイル画面での表示切替
-            if (window.innerWidth <= 650) {
-                chatBox.classList.add('mobile-chat-open');
-                backToRoomsBtn.style.display = 'block';
-            }
+          const msgDiv = document.createElement('div');
+          msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
 
-            // ルームごとの選択状態の更新
-            document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'text-[10px] text-slate-400 mb-0.5 px-1';
+          nameSpan.innerText = data.userName || '匿名生徒';
+
+          const bubble = document.createElement('div');
+          bubble.className = `max-w-[80%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${
+            isMe ? 'bg-slate-900 text-white rounded-br-xs' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-xs shadow-sm'
+          }`;
+          bubble.innerText = data.text || '';
+
+          msgDiv.appendChild(nameSpan);
+          msgDiv.appendChild(bubble);
+          chatContainer.appendChild(msgDiv);
+        });
+
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, (error) => {
+        console.error("Chat Listener Error:", error);
+      });
+
+      // 2. 黒板掲示板受信
+      const boardQuery = query(collection(db, 'board_items'), orderBy('createdAt', 'desc'), limit(50));
+      onSnapshot(boardQuery, (snapshot) => {
+        boardItems = [];
+        snapshot.forEach((doc) => {
+          boardItems.push({ id: doc.id, ...doc.data() });
+        });
+        renderBoardItems();
+        if (calendarInstance) calendarInstance.refetchEvents();
+      }, (error) => {
+        console.error("Board Listener Error:", error);
+      });
+    }
+
+    // チャット送信
+    const chatForm = document.getElementById('chat-form');
+    if (chatForm) {
+      chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('chat-input');
+        const text = input ? input.value.trim() : '';
+        if (!text) return;
+
+        input.value = '';
+        try {
+          await addDoc(collection(db, 'chats'), {
+            userName: userName,
+            text: text,
+            createdAt: serverTimestamp()
+          });
+        } catch (err) {
+          console.error("Chat Send Error:", err);
+          alert('メッセージの送信に失敗しました');
+        }
+      });
+    }
+
+    // 黒板投稿
+    const boardForm = document.getElementById('boardForm');
+    if (boardForm) {
+      boardForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const type = document.getElementById('boardType').value;
+        const title = document.getElementById('boardTitle').value.trim();
+        const date = document.getElementById('boardDate').value;
+        const content = document.getElementById('boardContent').value.trim();
+
+        if (!title || !date) return;
+
+        try {
+          await addDoc(collection(db, 'board_items'), {
+            type,
+            title,
+            date,
+            content,
+            author: userName,
+            createdAt: serverTimestamp()
+          });
+          boardForm.reset();
+          document.getElementById('modalBoard').classList.add('hidden');
+        } catch (err) {
+          console.error("Board Post Error:", err);
+          alert('掲示の投稿に失敗しました');
+        }
+      });
+    }
+
+    function renderBoardItems() {
+      const container = document.getElementById('board-items-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (boardItems.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center chalk-text-white py-12 text-sm">掲示物はまだありません</div>';
+        return;
+      }
+
+      boardItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3.5 text-slate-100 flex flex-col justify-between space-y-2';
+
+        const formattedDate = item.date ? item.date.replace('T', ' ') : '日時未設定';
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="bg-amber-400 text-amber-950 font-bold text-[10px] px-2 py-0.5 rounded-full">${escapeHtml(item.type || '連絡')}</span>
+              <span class="text-[11px] chalk-text-yellow"><i class="fa-regular fa-clock mr-1"></i>${escapeHtml(formattedDate)}</span>
+            </div>
+            <h4 class="font-bold text-sm md:text-base chalk-text-white">${escapeHtml(item.title || '')}</h4>
+            ${item.content ? `<p class="text-xs text-slate-200 mt-1 whitespace-pre-wrap leading-relaxed">${escapeHtml(item.content)}</p>` : ''}
+          </div>
+          <div class="text-[10px] text-slate-300 text-right pt-2 border-t border-white/10">
+            投稿者: ${escapeHtml(item.author || '匿名')}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    /* --- 個人課題管理 & カンバン/リスト描画 --- */
+    function renderTasks() {
+      localStorage.setItem('edutask_tasks_v2', JSON.stringify(tasks));
+
+      const queryText = (document.getElementById('searchQuery')?.value || '').toLowerCase();
+      const filterSub = document.getElementById('filterSubject')?.value || 'ALL';
+
+      const filtered = tasks.filter(t => {
+        const matchesQuery = t.title.toLowerCase().includes(queryText);
+        const matchesSub = filterSub === 'ALL' || t.subject === filterSub;
+        return matchesQuery && matchesSub;
+      });
+
+      // カンバンエリアのクリア
+      ['todo', 'doing', 'submitted', 'done'].forEach(st => {
+        const el = document.getElementById(`container-${st}`);
+        if (el) el.innerHTML = '';
+      });
+
+      const counts = { todo: 0, doing: 0, submitted: 0, done: 0 };
+      const now = new Date();
+
+      filtered.forEach(task => {
+        let currentStatus = task.status;
+        const due = new Date(task.dueDate);
+        if (currentStatus !== 'done' && currentStatus !== 'submitted' && due < now) {
+          currentStatus = 'overdue';
         }
 
-        backToRoomsBtn.addEventListener('click', () => {
-            chatBox.classList.remove('mobile-chat-open');
-            backToRoomsBtn.style.display = 'none';
-        });
+        if (counts[task.status] !== undefined) counts[task.status]++;
 
-        // テーマ切り替え
-        document.getElementById('theme-toggle').addEventListener('click', () => {
-            const currentTheme = document.body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.body.setAttribute('data-theme', newTheme);
-            document.getElementById('theme-toggle').innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
-        });
+        const card = createTaskCard(task, currentStatus);
+        const container = document.getElementById(`container-${task.status}`);
+        if (container) container.appendChild(card);
+      });
 
-        // Gemini クリップボード自動コピー＆起動
-        document.getElementById('gemini-launch-btn').addEventListener('click', async () => {
-            const taskName = document.getElementById('gemini-task-input').value.trim();
-            if (!taskName) {
-                alert('課題名を入力してください');
-                return;
+      // カウントの更新
+      ['todo', 'doing', 'submitted', 'done'].forEach(st => {
+        const badge = document.getElementById(`count-${st}`);
+        if (badge) badge.innerText = counts[st] || 0;
+      });
+
+      renderListView(filtered);
+      renderCharts();
+      if (calendarInstance) calendarInstance.refetchEvents();
+    }
+
+    function createTaskCard(task, currentStatus) {
+      const conf = statusConfig[currentStatus] || statusConfig.todo;
+      const card = document.createElement('div');
+      card.className = `bg-white p-3 rounded-lg border border-slate-200 shadow-sm ${conf.borderClass} space-y-2`;
+
+      const formattedDate = task.dueDate ? task.dueDate.replace('T', ' ') : '';
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded ${conf.bg}">${conf.label}</span>
+          <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">${escapeHtml(task.subject)}</span>
+        </div>
+        <h4 class="font-bold text-xs md:text-sm text-slate-800 leading-snug">${escapeHtml(task.title)}</h4>
+        <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+          <span><i class="fa-regular fa-clock mr-1"></i>${escapeHtml(formattedDate)}</span>
+          <div class="flex items-center gap-1">
+            <button onclick="editTask('${task.id}')" class="hover:text-slate-900 p-1"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="deleteTask('${task.id}')" class="hover:text-red-600 p-1"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    function renderListView(taskList) {
+      const tbody = document.getElementById('list-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      taskList.forEach(task => {
+        const conf = statusConfig[task.status] || statusConfig.todo;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+
+        tr.innerHTML = `
+          <td class="p-2.5"><span class="text-[10px] font-bold px-2 py-0.5 rounded ${conf.bg}">${conf.label}</span></td>
+          <td class="p-2.5 font-bold">${escapeHtml(task.subject)}</td>
+          <td class="p-2.5 font-bold text-slate-800">${escapeHtml(task.title)}</td>
+          <td class="p-2.5 text-slate-500">${escapeHtml(task.dueDate.replace('T', ' '))}</td>
+          <td class="p-2.5 text-right">
+            <button onclick="editTask('${task.id}')" class="text-slate-600 hover:text-slate-900 mr-2"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="deleteTask('${task.id}')" class="text-slate-600 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* --- 課題の追加・編集・削除グローバル関数 --- */
+    window.editTask = function(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      document.getElementById('taskId').value = task.id;
+      document.getElementById('taskTitle').value = task.title;
+      document.getElementById('taskSubject').value = task.subject;
+      document.getElementById('taskStatus').value = task.status;
+      document.getElementById('taskDueDate').value = task.dueDate;
+
+      document.getElementById('modalTitle').innerText = '課題の編集';
+      document.getElementById('modalTask').classList.remove('hidden');
+    };
+
+    window.deleteTask = function(id) {
+      if (confirm('この課題を削除しますか？')) {
+        tasks = tasks.filter(t => t.id !== id);
+        renderTasks();
+      }
+    };
+
+    // 課題フォーム送信
+    const taskForm = document.getElementById('taskForm');
+    if (taskForm) {
+      taskForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('taskId').value;
+        const title = document.getElementById('taskTitle').value.trim();
+        const subject = document.getElementById('taskSubject').value;
+        const status = document.getElementById('taskStatus').value;
+        const dueDate = document.getElementById('taskDueDate').value;
+
+        if (!title || !dueDate) return;
+
+        if (id) {
+          const idx = tasks.findIndex(t => t.id === id);
+          if (idx !== -1) tasks[idx] = { id, title, subject, status, dueDate };
+        } else {
+          tasks.push({ id: Date.now().toString(), title, subject, status, dueDate });
+        }
+
+        document.getElementById('modalTask').classList.add('hidden');
+        renderTasks();
+      });
+    }
+
+    /* --- 分析グラフ描画 (Chart.js) --- */
+    function renderCharts() {
+      const statusCtx = document.getElementById('chart-status')?.getContext('2d');
+      const subjectCtx = document.getElementById('chart-subject')?.getContext('2d');
+      if (!statusCtx || !subjectCtx) return;
+
+      const statusCounts = { todo: 0, doing: 0, submitted: 0, done: 0 };
+      const subjectCounts = {};
+
+      tasks.forEach(t => {
+        if (statusCounts[t.status] !== undefined) statusCounts[t.status]++;
+        subjectCounts[t.subject] = (subjectCounts[t.subject] || 0) + 1;
+      });
+
+      if (statusChart) statusChart.destroy();
+      statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['未着手', '進行中', '提出済み', '完了'],
+          datasets: [{
+            data: [statusCounts.todo, statusCounts.doing, statusCounts.submitted, statusCounts.done],
+            backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      if (subjectChart) subjectChart.destroy();
+      subjectChart = new Chart(subjectCtx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(subjectCounts),
+          datasets: [{
+            label: '課題数',
+            data: Object.values(subjectCounts),
+            backgroundColor: '#6366f1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+    }
+
+    /* --- FullCalendar 連携 --- */
+    function initCalendar() {
+      const calendarEl = document.getElementById('calendar');
+      if (!calendarEl) return;
+
+      calendarInstance = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ja',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek'
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+          const events = [];
+
+          // 1. 黒板予定
+          boardItems.forEach(b => {
+            if (b.date) {
+              events.push({
+                title: `[黒板] ${b.title}`,
+                start: b.date,
+                backgroundColor: '#4f46e5',
+                borderColor: '#4338ca'
+              });
             }
+          });
 
-            const prompt = `あなたは大学の課題作成をサポートするプロのTAです。
-以下の課題について構成案とドラフト骨子を作成してください。
-
-【対象課題】
-${taskName}
-
-【出力内容】
-1. 課題のゴール設定
-2. 章立て・構成案（序論・本論・結論）
-3. 執筆ステップと注意点`;
-
-            try {
-                await navigator.clipboard.writeText(prompt);
-                alert('プロンプトをコピーしました！Gemini画面で Ctrl + V で貼り付けてください。');
-            } catch (e) {
-                console.error(e);
+          // 2. 個人課題
+          tasks.forEach(t => {
+            if (t.dueDate) {
+              events.push({
+                title: `[締切] ${t.title}`,
+                start: t.dueDate,
+                backgroundColor: '#334155',
+                borderColor: '#1e293b'
+              });
             }
+          });
 
-            window.open('https://gemini.google.com/app', '_blank');
-        });
+          successCallback(events);
+        }
+      });
+      calendarInstance.render();
+    }
 
-        // デジタル黒板の新規投稿（モック操作）
-        document.getElementById('add-board-btn').addEventListener('click', () => {
-            const title = prompt('追加する課題・連絡タイトルを入力してください:');
-            if (title) {
-                const boardList = document.getElementById('board-cards-list');
-                const newItem = document.createElement('div');
-                newItem.className = 'board-item';
-                newItem.innerHTML = `<span class="tag">追加課題</span> <strong>${title}</strong> (共有追加されました)`;
-                boardList.prepend(newItem);
-            }
-        });
+    /* --- イベントリスナー・タブ切り替え統括 --- */
+    function setupEventListeners() {
+      // モーダルオープン / クローズ系
+      document.getElementById('btn-open-shortcut-modal')?.addEventListener('click', openShortcutModal);
+      document.getElementById('btn-close-shortcut-modal')?.addEventListener('click', () => document.getElementById('modalShortcut').classList.add('hidden'));
+      document.getElementById('btn-cancel-shortcut-modal')?.addEventListener('click', () => document.getElementById('modalShortcut').classList.add('hidden'));
+      document.getElementById('btn-save-shortcut-modal')?.addEventListener('click', saveShortcutSettings);
 
-        // チャット送信（モック操作）
-        document.getElementById('send-msg-btn').addEventListener('click', () => {
-            const input = document.getElementById('chat-message-input');
-            const msg = input.value.trim();
-            if (msg) {
-                const msgList = document.getElementById('chat-messages-list');
-                const newMsg = document.createElement('div');
-                newMsg.className = 'msg-bubble sent';
-                newMsg.innerHTML = `${msg}<div class="msg-meta">たった今</div>`;
-                msgList.appendChild(newMsg);
-                input.value = '';
-                msgList.scrollTop = msgList.scrollHeight;
-            }
-        });
-    </script>
+      document.getElementById('btn-open-task-modal')?.addEventListener('click', () => {
+        document.getElementById('taskForm').reset();
+        document.getElementById('taskId').value = '';
+        document.getElementById('modalTitle').innerText = '課題の追加';
+        document.getElementById('modalTask').classList.remove('hidden');
+      });
+      document.getElementById('btn-close-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
+      document.getElementById('btn-cancel-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
+
+      const openBoardModal = () => document.getElementById('modalBoard').classList.remove('hidden');
+      document.getElementById('btn-open-board-modal')?.addEventListener('click', openBoardModal);
+      document.getElementById('btn-header-board-pc')?.addEventListener('click', openBoardModal);
+      document.getElementById('btn-header-board-mb')?.addEventListener('click', openBoardModal);
+      document.getElementById('btn-close-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
+      document.getElementById('btn-cancel-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
+
+      const openNameModal = () => {
+        document.getElementById('userNameInput').value = userName;
+        document.getElementById('modalName').classList.remove('hidden');
+      };
+      document.getElementById('btn-open-name-modal-pc')?.addEventListener('click', openNameModal);
+      document.getElementById('btn-open-name-modal-mb')?.addEventListener('click', openNameModal);
+      document.getElementById('btn-save-username')?.addEventListener('click', saveUserName);
+
+      // 検索・フィルター
+      document.getElementById('searchQuery')?.addEventListener('input', renderTasks);
+      document.getElementById('filterSubject')?.addEventListener('change', renderTasks);
+
+      // ビュー切り替え (カンバン / リスト)
+      document.getElementById('btn-kanban')?.addEventListener('click', () => {
+        document.getElementById('view-kanban').classList.remove('hidden');
+        document.getElementById('view-list').classList.add('hidden');
+        document.getElementById('btn-kanban').className = 'px-2.5 py-1 rounded-lg border text-xs bg-slate-100 font-bold';
+        document.getElementById('btn-list').className = 'px-2.5 py-1 rounded-lg border text-xs bg-white text-slate-600';
+      });
+
+      document.getElementById('btn-list')?.addEventListener('click', () => {
+        document.getElementById('view-list').classList.remove('hidden');
+        document.getElementById('view-kanban').classList.add('hidden');
+        document.getElementById('btn-list').className = 'px-2.5 py-1 rounded-lg border text-xs bg-slate-100 font-bold';
+        document.getElementById('btn-kanban').className = 'px-2.5 py-1 rounded-lg border text-xs bg-white text-slate-600';
+      });
+
+      // ナビゲーションタブ切り替え (PC & モバイル連動)
+      const tabs = [
+        { name: 'portal', title: 'ポータル' },
+        { name: 'board', title: '黒板掲示板' },
+        { name: 'chat', title: 'クラスチャット' },
+        { name: 'tasks', title: '個人課題' },
+        { name: 'calendar', title: '共有カレンダー' }
+      ];
+
+      tabs.forEach(tab => {
+        const switchTab = () => {
+          tabs.forEach(t => {
+            document.getElementById(`section-${t.name}`)?.classList.add('hidden');
+            const pcBtn = document.getElementById(`tab-${t.name}-pc`);
+            const mbBtn = document.getElementById(`tab-${t.name}-mb`);
+            if (pcBtn) pcBtn.className = 'tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900';
+            if (mbBtn) mbBtn.className = 'flex flex-col items-center gap-0.5 text-slate-500';
+          });
+
+          document.getElementById(`section-${tab.name}`)?.classList.remove('hidden');
+          const activePc = document.getElementById(`tab-${tab.name}-pc`);
+          const activeMb = document.getElementById(`tab-${tab.name}-mb`);
+          if (activePc) activePc.className = 'tab-btn px-3 py-1.5 rounded-md bg-white text-slate-900 font-bold shadow-sm';
+          if (activeMb) activeMb.className = 'flex flex-col items-center gap-0.5 text-slate-900 font-bold';
+
+          const titleEl = document.getElementById('mobile-header-title');
+          if (titleEl) titleEl.innerText = tab.title;
+
+          if (tab.name === 'calendar' && calendarInstance) {
+            setTimeout(() => calendarInstance.updateSize(), 100);
+          }
+        };
+
+        document.getElementById(`tab-${tab.name}-pc`)?.addEventListener('click', switchTab);
+        document.getElementById(`tab-${tab.name}-mb`)?.addEventListener('click', switchTab);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
 </body>
 </html>

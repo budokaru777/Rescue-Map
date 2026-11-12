@@ -1250,7 +1250,7 @@
     });
   </script>
 
-  <!-- ▼ ここから学習ツール拡張モジュール（タイマー・ToDoリスト・チェックリスト・メモ機能＋黒板自動連携） ▼ -->
+  <!-- ▼ ここから学習ツール拡張モジュール（タイマー・統合ToDoリスト・メモ機能＋黒板自動連携） ▼ -->
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import {
@@ -1276,13 +1276,11 @@
 
     const STORAGE_KEYS = {
       todos: 'eduportal_ext_todos_v1',
-      checks: 'eduportal_ext_checks_v1',
       memo: 'eduportal_ext_memo_v1',
       syncedBoardIds: 'eduportal_ext_synced_board_ids_v1'
     };
 
     let todos = JSON.parse(localStorage.getItem(STORAGE_KEYS.todos) || '[]');
-    let checks = JSON.parse(localStorage.getItem(STORAGE_KEYS.checks) || '[]');
     let memoText = localStorage.getItem(STORAGE_KEYS.memo) || '';
     let syncedBoardIds = JSON.parse(localStorage.getItem(STORAGE_KEYS.syncedBoardIds) || '[]');
 
@@ -1346,18 +1344,15 @@
             </button>
           </div>
 
-          <!-- 4機能切り替えタブ -->
-          <div class="grid grid-cols-4 bg-slate-100 p-1 border-b border-slate-200 text-xs font-bold">
-            <button data-ext-tab="timer" class="ext-tab-btn py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1">
+          <!-- 3機能切り替えタブ（タイマー・ToDo・メモ） -->
+          <div class="grid grid-cols-3 bg-slate-100 p-1 border-b border-slate-200 text-xs font-bold">
+            <button data-ext-tab="timer" class="ext-tab-btn py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5">
               <i class="fa-solid fa-stopwatch"></i> タイマー
             </button>
-            <button data-ext-tab="todo" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
-              <i class="fa-solid fa-list-ul"></i> ToDo
+            <button data-ext-tab="todo" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-square-check"></i> ToDo
             </button>
-            <button data-ext-tab="check" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
-              <i class="fa-solid fa-square-check"></i> チェック
-            </button>
-            <button data-ext-tab="memo" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+            <button data-ext-tab="memo" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
               <i class="fa-solid fa-note-sticky"></i> メモ
             </button>
           </div>
@@ -1401,10 +1396,10 @@
               </div>
             </div>
 
-            <!-- 2. ToDoリスト -->
+            <!-- 2. ToDo（チェックリスト統合版） -->
             <div id="ext-pane-todo" class="ext-pane hidden space-y-3">
               <div class="text-[11px] bg-indigo-50 text-indigo-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                <i class="fa-solid fa-chalkboard"></i> 黒板に書き込まれた予定も自動反映されます
+                <i class="fa-solid fa-chalkboard"></i> 黒板に書き込まれた予定もToDoへ自動反映されます
               </div>
               <form id="ext-todo-form" class="flex gap-1.5">
                 <select id="ext-todo-priority" class="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white outline-none">
@@ -1412,41 +1407,30 @@
                   <option value="mid" selected>中</option>
                   <option value="low">低</option>
                 </select>
-                <input type="text" id="ext-todo-input" placeholder="今日やることを入力..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs outline-none">
+                <input type="text" id="ext-todo-input" placeholder="やること・持ち物・確認項目を入力..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs outline-none">
                 <button type="submit" class="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg text-xs">追加</button>
               </form>
-              <div class="flex justify-between items-center text-[11px] text-slate-500">
-                <span id="ext-todo-stats">残り 0 件</span>
-                <button id="ext-todo-clear-done" class="text-rose-600 hover:underline">完了済みを一括削除</button>
-              </div>
-              <ul id="ext-todo-list" class="space-y-1.5 max-h-64 overflow-y-auto"></ul>
-            </div>
 
-            <!-- 3. チェックリスト -->
-            <div id="ext-pane-check" class="ext-pane hidden space-y-3">
-              <div class="text-[11px] bg-emerald-50 text-emerald-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                <i class="fa-solid fa-chalkboard"></i> 黒板に書き込まれた予定も自動反映されます
-              </div>
-              <form id="ext-check-form" class="flex gap-1.5">
-                <input type="text" id="ext-check-input" placeholder="持ち物・提出前の確認項目..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs outline-none">
-                <button type="submit" class="bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs">追加</button>
-              </form>
+              <!-- 達成率プログレスバー -->
               <div class="space-y-1">
                 <div class="flex justify-between text-[11px] font-bold text-slate-600">
-                  <span>達成率</span>
-                  <span id="ext-check-progress-text">0% (0/0)</span>
+                  <span id="ext-todo-stats">残り 0 件</span>
+                  <span id="ext-todo-progress-text">達成率 0% (0/0)</span>
                 </div>
                 <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                  <div id="ext-check-progress-bar" class="bg-emerald-600 h-full transition-all" style="width: 0%"></div>
+                  <div id="ext-todo-progress-bar" class="bg-emerald-600 h-full transition-all" style="width: 0%"></div>
                 </div>
               </div>
-              <ul id="ext-check-list" class="space-y-1.5 max-h-60 overflow-y-auto"></ul>
-              <div class="text-right">
-                <button id="ext-check-uncheck-all" class="text-[11px] text-slate-500 hover:text-slate-800 underline">すべてのチェックを外す</button>
+
+              <ul id="ext-todo-list" class="space-y-1.5 max-h-60 overflow-y-auto"></ul>
+
+              <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-100">
+                <button id="ext-todo-uncheck-all" class="text-slate-500 hover:text-slate-800 underline">すべてのチェックを外す</button>
+                <button id="ext-todo-clear-done" class="text-rose-600 hover:underline font-bold">完了済みを一括削除</button>
               </div>
             </div>
 
-            <!-- 4. メモ機能 -->
+            <!-- 3. メモ機能 -->
             <div id="ext-pane-memo" class="ext-pane hidden space-y-2">
               <div class="flex justify-between items-center">
                 <span class="text-[11px] text-slate-500"><i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i> 入力内容はブラウザに自動保存されます</span>
@@ -1474,9 +1458,9 @@
         btn.addEventListener('click', () => {
           const target = btn.getAttribute('data-ext-tab');
           document.querySelectorAll('.ext-tab-btn').forEach(b => {
-            b.className = 'ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1';
+            b.className = 'ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
           });
-          btn.className = 'ext-tab-btn py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1';
+          btn.className = 'ext-tab-btn py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5';
           document.querySelectorAll('.ext-pane').forEach(p => p.classList.add('hidden'));
           document.getElementById(`ext-pane-${target}`).classList.remove('hidden');
         });
@@ -1538,7 +1522,7 @@
         }
       });
 
-      /* --- ToDoロジック --- */
+      /* --- 統合ToDoロジック --- */
       function renderTodos() {
         localStorage.setItem(STORAGE_KEYS.todos, JSON.stringify(todos));
         const listEl = document.getElementById('ext-todo-list');
@@ -1554,7 +1538,7 @@
           li.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs';
           li.innerHTML = `
             <label class="flex items-center gap-2 cursor-pointer flex-1">
-              <input type="checkbox" ${item.done ? 'checked' : ''} data-idx="${idx}" class="ext-todo-chk rounded">
+              <input type="checkbox" ${item.done ? 'checked' : ''} data-idx="${idx}" class="ext-todo-chk rounded text-emerald-600">
               ${badgeMap[item.priority] || badgeMap.mid}
               <span class="${item.done ? 'line-through text-slate-400' : 'text-slate-800 font-medium'}">${escapeStr(item.text)}</span>
             </label>
@@ -1562,8 +1546,15 @@
           `;
           listEl.appendChild(li);
         });
-        const rem = todos.filter(t => !t.done).length;
-        document.getElementById('ext-todo-stats').innerText = `残り ${rem} 件 / 全 ${todos.length} 件`;
+
+        const total = todos.length;
+        const doneCount = todos.filter(t => t.done).length;
+        const rem = total - doneCount;
+        const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+        document.getElementById('ext-todo-stats').innerText = `残り ${rem} 件`;
+        document.getElementById('ext-todo-progress-text').innerText = `達成率 ${pct}% (${doneCount}/${total})`;
+        document.getElementById('ext-todo-progress-bar').style.width = `${pct}%`;
 
         listEl.querySelectorAll('.ext-todo-chk').forEach(chk => {
           chk.addEventListener('change', (e) => {
@@ -1591,64 +1582,14 @@
         renderTodos();
       });
 
-      document.getElementById('ext-todo-clear-done').addEventListener('click', () => {
-        todos = todos.filter(t => !t.done);
+      document.getElementById('ext-todo-uncheck-all').addEventListener('click', () => {
+        todos.forEach(t => t.done = false);
         renderTodos();
       });
 
-      /* --- チェックリストロジック --- */
-      function renderChecks() {
-        localStorage.setItem(STORAGE_KEYS.checks, JSON.stringify(checks));
-        const listEl = document.getElementById('ext-check-list');
-        if (!listEl) return;
-        listEl.innerHTML = '';
-        checks.forEach((item, idx) => {
-          const li = document.createElement('li');
-          li.className = 'flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs';
-          li.innerHTML = `
-            <label class="flex items-center gap-2 cursor-pointer flex-1">
-              <input type="checkbox" ${item.checked ? 'checked' : ''} data-idx="${idx}" class="ext-chk-box rounded text-emerald-600">
-              <span class="${item.checked ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeStr(item.text)}</span>
-            </label>
-            <button data-idx="${idx}" class="ext-chk-del text-slate-400 hover:text-rose-600 ml-2"><i class="fa-solid fa-xmark"></i></button>
-          `;
-          listEl.appendChild(li);
-        });
-
-        const total = checks.length;
-        const doneCount = checks.filter(c => c.checked).length;
-        const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
-        document.getElementById('ext-check-progress-text').innerText = `${pct}% (${doneCount}/${total})`;
-        document.getElementById('ext-check-progress-bar').style.width = `${pct}%`;
-
-        listEl.querySelectorAll('.ext-chk-box').forEach(box => {
-          box.addEventListener('change', (e) => {
-            const i = Number(e.target.getAttribute('data-idx'));
-            checks[i].checked = e.target.checked;
-            renderChecks();
-          });
-        });
-        listEl.querySelectorAll('.ext-chk-del').forEach(del => {
-          del.addEventListener('click', (e) => {
-            const i = Number(e.currentTarget.getAttribute('data-idx'));
-            checks.splice(i, 1);
-            renderChecks();
-          });
-        });
-      }
-
-      document.getElementById('ext-check-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const input = document.getElementById('ext-check-input');
-        if (!input.value.trim()) return;
-        checks.push({ text: input.value.trim(), checked: false });
-        input.value = '';
-        renderChecks();
-      });
-
-      document.getElementById('ext-check-uncheck-all').addEventListener('click', () => {
-        checks.forEach(c => c.checked = false);
-        renderChecks();
+      document.getElementById('ext-todo-clear-done').addEventListener('click', () => {
+        todos = todos.filter(t => !t.done);
+        renderTodos();
       });
 
       /* --- メモロジック --- */
@@ -1678,9 +1619,8 @@
       });
 
       renderTodos();
-      renderChecks();
 
-      /* --- 黒板掲示板の予定をToDoリスト・チェックリストへ自動反映 --- */
+      /* --- 黒板掲示板の予定をToDoへ自動反映 --- */
       const boardQuery = query(collection(db, "board_items"), orderBy("date", "asc"));
       onSnapshot(boardQuery, (snapshot) => {
         let updated = false;
@@ -1693,8 +1633,6 @@
             const priority = (item.type === '小テスト' || item.type === 'プリント・課題') ? 'high' : 'mid';
 
             todos.unshift({ text: label, priority, done: false, boardId: id });
-            checks.push({ text: label, checked: false, boardId: id });
-
             syncedBoardIds.push(id);
             updated = true;
           }
@@ -1703,7 +1641,6 @@
         if (updated) {
           localStorage.setItem(STORAGE_KEYS.syncedBoardIds, JSON.stringify(syncedBoardIds));
           renderTodos();
-          renderChecks();
         }
       });
     });

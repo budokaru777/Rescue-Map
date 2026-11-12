@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>EduPortal & Class Hub Pro</title>
+  <title>スタサポ - EduPortal & Task Hub</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -22,20 +22,17 @@
     .status-border-done { border-left: 4px solid #10b981; }
     .status-border-overdue { border-left: 4px solid #8b5cf6; }
 
-    /* 黒板デザイン風のスタイル */
     .blackboard {
       background-color: #1e3a2b;
       color: #f8fafc;
       border: 8px solid #854d0e;
       box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
-      font-family: 'Hiragino Sans', sans-serif;
+      font-family: 'Hiragino Sans', 'メイリオ', sans-serif;
     }
     .chalk-text-yellow { color: #fef08a; text-shadow: 0 0 2px rgba(254,240,138,0.5); }
     .chalk-text-white { color: #f8fafc; text-shadow: 0 0 2px rgba(248,250,252,0.5); }
 
-    /* スマホ向けスクロール調整 */
     body { -webkit-tap-highlight-color: transparent; }
-    .pb-safe { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col pb-20 md:pb-0">
@@ -44,31 +41,35 @@
   <header class="bg-white text-slate-800 border-b border-slate-200 sticky top-0 z-30 shadow-sm hidden md:block">
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-4">
       <div class="flex items-center gap-3">
-        <i class="fa-solid fa-graduation-cap text-2xl text-slate-800"></i>
-        <h1 class="text-xl font-bold tracking-tight text-slate-900">EduPortal & Class Hub</h1>
+        <i class="fa-solid fa-graduation-cap text-2xl text-indigo-600"></i>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-slate-900">スタサポ <span class="text-xs font-normal text-slate-500">EduPortal & Task Hub</span></h1>
+        </div>
       </div>
 
       <!-- Navigation Tabs (PC) -->
       <nav class="flex space-x-1 bg-slate-100 p-1 rounded-lg text-sm font-medium border border-slate-200">
         <button id="tab-portal-pc" class="tab-btn px-3 py-1.5 rounded-md bg-white text-slate-900 font-bold shadow-sm">
-          <i class="fa-solid fa-house mr-1.5"></i>ポータル
+          <i class="fa-solid fa-house mr-1.5 text-indigo-600"></i>ポータル
         </button>
         <button id="tab-board-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
-          <i class="fa-solid fa-chalkboard mr-1.5"></i>黒板掲示板
+          <i class="fa-solid fa-chalkboard mr-1.5 text-emerald-600"></i>黒板掲示板
         </button>
         <button id="tab-chat-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
-          <i class="fa-solid fa-comments mr-1.5"></i>クラスチャット
+          <i class="fa-solid fa-comments mr-1.5 text-purple-600"></i>クラスチャット
         </button>
         <button id="tab-tasks-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
-          <i class="fa-solid fa-list-check mr-1.5"></i>個人課題
+          <i class="fa-solid fa-list-check mr-1.5 text-blue-600"></i>個人課題
         </button>
         <button id="tab-calendar-pc" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900">
-          <i class="fa-regular fa-calendar-days mr-1.5"></i>共有カレンダー
+          <i class="fa-regular fa-calendar-days mr-1.5 text-amber-600"></i>共有カレンダー
         </button>
       </nav>
 
       <div class="flex items-center gap-2">
-        <!-- 常時表示される黒板投稿ボタン (PC) -->
+        <button id="btn-open-log-modal-pc" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1.5 rounded-lg border flex items-center gap-1">
+          <i class="fa-solid fa-table"></i> ログ連携設定
+        </button>
         <button id="btn-header-board-pc" class="bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm transition">
           <i class="fa-solid fa-chalkboard-user"></i> 黒板に投稿
         </button>
@@ -81,12 +82,14 @@
   <!-- Mobile Top Header (スマホ表示用) -->
   <header class="bg-white text-slate-900 border-b border-slate-200 px-3 py-2.5 sticky top-0 z-30 flex justify-between items-center md:hidden shadow-sm">
     <div class="flex items-center gap-2">
-      <i class="fa-solid fa-graduation-cap text-lg text-slate-800"></i>
-      <span class="font-bold text-sm tracking-tight" id="mobile-header-title">ポータル</span>
+      <i class="fa-solid fa-graduation-cap text-lg text-indigo-600"></i>
+      <span class="font-bold text-sm tracking-tight" id="mobile-header-title">スタサポ ポータル</span>
     </div>
     
     <div class="flex items-center gap-1.5">
-      <!-- 常時表示される黒板投稿ボタン (スマホ) -->
+      <button id="btn-open-log-modal-mb" class="text-[11px] bg-slate-100 border px-2 py-1 rounded-md text-slate-700">
+        <i class="fa-solid fa-table"></i> ログ
+      </button>
       <button id="btn-header-board-mb" class="bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
         <i class="fa-solid fa-plus"></i> 黒板投稿
       </button>
@@ -99,41 +102,35 @@
   <!-- Main Content Container -->
   <main class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 flex-grow w-full">
 
-    <!-- 0. ポータル（ショートカット, Gemini 連携, 埋め込み Google カレンダー） -->
+    <!-- 0. ポータル -->
     <section id="section-portal" class="tab-content block space-y-4 md:space-y-6">
       
-      <!-- ショートカットカード ヘッダー＆設定ボタン -->
       <div class="flex justify-between items-center">
         <h2 class="text-sm md:text-base font-bold text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-bookmark text-indigo-600"></i> ショートカット
+          <i class="fa-solid fa-bookmark text-indigo-600"></i> 学習ショートカット集約
         </h2>
         <button id="btn-open-shortcut-modal" class="text-xs bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
           <i class="fa-solid fa-gear text-slate-500"></i> カスタムリンク設定
         </button>
       </div>
 
-      <!-- ショートカットカード (Classroom / Teams 固定、後半2つはカスタム) -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <!-- 1. Google Classroom (固定) -->
-        <a href="https://classroom.google.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+        <a href="https://classroom.google.com" target="_blank" onclick="sendUsageLog('ショートカット外部遷移', 'Classroom')" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
           <i class="fa-solid fa-chalkboard-user text-3xl md:text-4xl text-emerald-600 mb-1.5 md:mb-2"></i>
           <span class="font-bold text-slate-800 text-sm md:text-base">Classroom</span>
         </a>
 
-        <!-- 2. Microsoft Teams (固定) -->
-        <a href="https://teams.microsoft.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+        <a href="https://teams.microsoft.com" target="_blank" onclick="sendUsageLog('ショートカット外部遷移', 'Teams')" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
           <i class="fa-solid fa-users text-3xl md:text-4xl text-indigo-600 mb-1.5 md:mb-2"></i>
           <span class="font-bold text-slate-800 text-sm md:text-base">Teams</span>
         </a>
 
-        <!-- 3. カスタムショートカット 1 -->
-        <a id="shortcut-card-3" href="https://calendar.google.com" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+        <a id="shortcut-card-3" href="https://calendar.google.com" target="_blank" onclick="sendUsageLog('ショートカット外部遷移', 'リンク3')" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
           <i class="fa-solid fa-globe text-3xl md:text-4xl text-blue-600 mb-1.5 md:mb-2"></i>
           <span id="shortcut-label-3" class="font-bold text-slate-800 text-sm md:text-base">Googleカレンダー</span>
         </a>
 
-        <!-- 4. カスタムショートカット 2 -->
-        <a id="shortcut-card-4" href="https://moodle.org" target="_blank" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
+        <a id="shortcut-card-4" href="https://moodle.org" target="_blank" onclick="sendUsageLog('ショートカット外部遷移', 'リンク4')" class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-center">
           <i class="fa-solid fa-graduation-cap text-3xl md:text-4xl text-amber-500 mb-1.5 md:mb-2"></i>
           <span id="shortcut-label-4" class="font-bold text-slate-800 text-sm md:text-base">Moodle</span>
         </a>
@@ -142,60 +139,53 @@
       <!-- Gemini AI 課題アシスタント -->
       <div class="bg-white border border-slate-200 rounded-xl p-4 md:p-6 shadow-sm space-y-3">
         <h3 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
-          <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> Gemini AI 課題アシスタント
+          <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> Gemini AI 課題執筆アシスタント
         </h3>
         <p class="text-xs text-slate-500 leading-relaxed">
           課題名を入力してボタンを押すと、構成案や骨子を作成する指示文が自動コピーされ Gemini が起動します。
         </p>
         <div class="flex flex-col sm:flex-row gap-2 md:gap-3 pt-1">
-          <input type="text" id="task-title-input" placeholder="例: 情報科学演習 レポート第2回" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none">
+          <input type="text" id="task-title-input" placeholder="例: 情報科学演習 レポート第2回" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
           <button id="send-to-gemini-btn" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-            <i class="fa-solid fa-copy"></i> Geminiを起動
+            <i class="fa-solid fa-copy"></i> コピーしてGemini起動
           </button>
         </div>
       </div>
 
       <!-- 埋め込み Google カレンダー -->
       <div class="bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex items-center justify-between">
           <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-calendar-check text-blue-600"></i> Google カレンダー埋め込み表示
+            <i class="fa-solid fa-calendar-check text-blue-600"></i> クラス共有 Google カレンダー
           </h2>
-          <span id="cal-status-text" class="text-xs text-slate-500"></span>
-        </div>
-        
-        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-          <label for="calendar-id" class="text-xs font-bold text-slate-600 whitespace-nowrap">カレンダーID (メールアドレス):</label>
-          <input type="email" id="calendar-id" placeholder="rf24059q@st.omu.ac.jp" class="flex-1 border border-slate-300 rounded px-3 py-1 text-xs outline-none bg-white">
-          <button id="btn-save-calendar-settings" class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-slate-700 whitespace-nowrap">保存</button>
+          <span class="text-xs text-slate-500">リアルタイム同期中</span>
         </div>
 
-        <div class="w-full h-[350px] md:h-[450px] border border-slate-200 rounded-lg overflow-hidden">
-          <iframe id="calendar-iframe" src="about:blank" class="w-full h-full border-none"></iframe>
+        <div class="w-full overflow-x-auto border border-slate-200 rounded-lg">
+          <iframe src="https://calendar.google.com/calendar/embed?src=rf24059q%40st.omu.ac.jp&ctz=Asia%2FTokyo" style="border: 0" width="800" height="600" frameborder="0" scrolling="no" class="w-full min-h-[450px]"></iframe>
         </div>
       </div>
 
     </section>
 
-    <!-- 1. クラスの黒板掲示板（すべての連絡・予定共有） -->
+    <!-- 1. クラスの黒板掲示板 -->
     <section id="section-board" class="tab-content hidden space-y-4">
       <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200">
         <div>
-          <h2 class="font-bold text-slate-900 text-sm md:text-base">クラス黒板掲示板</h2>
-          <p class="text-xs text-slate-500">小テスト・課題締切・行事・授業変更など全連絡をリアルタイム共有</p>
+          <h2 class="font-bold text-slate-900 text-sm md:text-base">みんなのデジタル黒板掲示板</h2>
+          <p class="text-xs text-slate-500">優秀な生徒が1人入力すれば、多すぎて管理しきれないクラス全員へ即座に共有されます</p>
         </div>
         <button id="btn-open-board-modal" class="bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-plus"></i> 掲示板に投稿
         </button>
       </div>
 
-      <!-- 黒板風デザインエリア -->
       <div class="blackboard p-4 md:p-6 rounded-2xl min-h-[400px]">
         <div class="flex items-center justify-between border-b border-amber-700/60 pb-3 mb-4">
           <span class="chalk-text-yellow font-bold text-base md:text-lg flex items-center gap-2">
-            <i class="fa-solid fa-thumbtack"></i> 連絡事項・行事・小テスト一覧
+            <i class="fa-solid fa-thumbtack"></i> 連絡事項・小テスト・提出課題一覧
           </span>
-          <span class="text-xs chalk-text-white opacity-80">リアルタイム同期中</span>
+          <span class="text-xs chalk-text-white opacity-80"><i class="fa-solid fa-rotate-right animate-spin mr-1"></i>リアルタイム同期中</span>
         </div>
 
         <div id="board-items-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -206,36 +196,47 @@
 
     <!-- 2. リアルタイムクラスチャット -->
     <section id="section-chat" class="tab-content hidden">
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[75vh]">
-        <!-- Chat Header -->
-        <div class="p-3.5 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-comments text-indigo-600"></i>
-            <span class="font-bold text-sm md:text-base text-slate-800">クラスチャット</span>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row h-[75vh] overflow-hidden">
+        <div class="w-full md:w-64 border-r border-slate-200 bg-slate-50 flex flex-col">
+          <div class="p-3 border-b border-slate-200 font-bold text-xs text-slate-700 flex justify-between items-center">
+            <span><i class="fa-solid fa-comments text-purple-600"></i> チャットルーム</span>
           </div>
-          <span class="text-xs text-slate-500" id="chat-user-count">リアルタイム同期中</span>
+          <div class="flex-1 overflow-y-auto divide-y divide-slate-200">
+            <div class="p-3 bg-indigo-50 border-l-4 border-indigo-600 cursor-pointer flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-users"></i></div>
+              <div class="flex-1 overflow-hidden">
+                <div class="font-bold text-xs text-slate-800 truncate">全体クラスグループ</div>
+                <div class="text-[10px] text-slate-500 truncate">全員への連絡・課題相談</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Chat Messages Area -->
-        <div id="chat-messages-container" class="flex-1 p-3 md:p-4 overflow-y-auto space-y-3 bg-slate-50/50">
-          <div class="text-center text-slate-400 text-xs py-8">メッセージを読み込んでいます...</div>
-        </div>
+        <div class="flex-1 flex flex-col bg-white">
+          <div class="p-3 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <span class="font-bold text-xs md:text-sm text-slate-800">全体クラスグループ</span>
+            <span class="text-[11px] text-slate-500">オンライン</span>
+          </div>
 
-        <!-- Chat Input Form -->
-        <form id="chat-form" class="p-2 md:p-3 bg-white border-t border-slate-200 flex gap-2 rounded-b-xl">
-          <input type="text" id="chat-input" placeholder="メッセージを入力..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-400">
-          <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-1">
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </form>
+          <div id="chat-messages-container" class="flex-1 p-3 md:p-4 overflow-y-auto space-y-3 bg-slate-50/30">
+            <div class="text-center text-slate-400 text-xs py-8">メッセージを読み込んでいます...</div>
+          </div>
+
+          <form id="chat-form" class="p-2 md:p-3 bg-white border-t border-slate-200 flex gap-2">
+            <input type="text" id="chat-input" placeholder="メッセージを入力..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg text-xs md:text-sm flex items-center gap-1">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
       </div>
     </section>
 
-    <!-- 3. 個人課題管理 & 進捗レポートグラフ -->
+    <!-- 3. 個人課題管理 -->
     <section id="section-tasks" class="tab-content hidden space-y-4">
       <div class="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-center justify-between">
         <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
-          <input type="text" id="searchQuery" placeholder="検索..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs md:text-sm outline-none w-full md:w-48">
+          <input type="text" id="searchQuery" placeholder="課題名で検索..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs md:text-sm outline-none w-full md:w-48">
           <select id="filterSubject" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white">
             <option value="ALL">全教科</option>
             <option value="数学">数学</option>
@@ -248,17 +249,12 @@
         </div>
 
         <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
-          <div class="flex items-center gap-1">
-            <button id="btn-kanban" class="px-2.5 py-1 rounded-lg border text-xs bg-slate-100 font-bold">カンバン</button>
-            <button id="btn-list" class="px-2.5 py-1 rounded-lg border text-xs bg-white text-slate-600">リスト</button>
-          </div>
           <button id="btn-open-task-modal" class="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1">
-            <i class="fa-solid fa-plus"></i> 追加
+            <i class="fa-solid fa-plus"></i> 課題を追加
           </button>
         </div>
       </div>
 
-      <!-- KANBAN BOARD -->
       <div id="view-kanban" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <div class="bg-slate-100/70 p-3 rounded-xl border border-slate-200">
           <div class="flex justify-between items-center mb-2">
@@ -293,23 +289,6 @@
         </div>
       </div>
 
-      <!-- LIST VIEW -->
-      <div id="view-list" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-        <table class="w-full text-left text-xs text-slate-600">
-          <thead class="bg-slate-50 text-slate-700 font-bold border-b">
-            <tr>
-              <th class="p-2.5">状況</th>
-              <th class="p-2.5">教科</th>
-              <th class="p-2.5">タイトル</th>
-              <th class="p-2.5">締切日時</th>
-              <th class="p-2.5 text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody id="list-table-body" class="divide-y divide-slate-100"></tbody>
-        </table>
-      </div>
-
-      <!-- 課題進捗統計グラフエリア -->
       <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
         <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
           <i class="fa-solid fa-chart-pie text-indigo-600"></i> 課題の進捗レポート & 負荷分析
@@ -331,8 +310,8 @@
     <section id="section-calendar" class="tab-content hidden">
       <div class="bg-white p-3 md:p-5 rounded-xl shadow-sm border border-slate-200">
         <div class="text-xs text-slate-500 mb-3 flex items-center gap-2">
-          <span class="inline-block w-3 h-3 bg-indigo-600 rounded"></span> 黒板掲示板の予定
-          <span class="inline-block w-3 h-3 bg-slate-700 rounded ml-2"></span> 個人課題の締切
+          <span class="inline-block w-3 h-3 bg-emerald-600 rounded"></span> 黒板掲示板の予定
+          <span class="inline-block w-3 h-3 bg-indigo-600 rounded ml-2"></span> 個人課題の締切
         </div>
         <div id="calendar" class="text-xs md:text-sm"></div>
       </div>
@@ -340,9 +319,9 @@
 
   </main>
 
-  <!-- Mobile Bottom Navigation (スマホ専用ボトムバー) -->
+  <!-- Mobile Bottom Navigation -->
   <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-1.5 z-40 flex justify-around items-center shadow-lg">
-    <button id="tab-portal-mb" class="flex flex-col items-center gap-0.5 text-slate-900 font-bold">
+    <button id="tab-portal-mb" class="flex flex-col items-center gap-0.5 text-indigo-600 font-bold">
       <i class="fa-solid fa-house text-lg"></i>
       <span class="text-[10px]">ポータル</span>
     </button>
@@ -364,7 +343,27 @@
     </button>
   </nav>
 
-  <!-- Modal: カスタムショートカットリンク設定 -->
+  <!-- Modal: ログ送信用 GAS URL 設定 -->
+  <div id="modalLog" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border p-4 space-y-3">
+      <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-table text-emerald-600"></i> Google スプレッドシート連携設定
+      </h3>
+      <p class="text-xs text-slate-500">
+        Google Apps Script (GAS) で発行したウェブアプリの URL を貼り付けると、誰がいつ使ったかが自動で記録されます。
+      </p>
+      <div>
+        <label class="block text-xs font-bold text-slate-600 mb-1">ウェブアプリ URL (https://script.google.com/...)</label>
+        <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border p-2 rounded-lg text-xs outline-none">
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button id="btn-close-log-modal" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
+        <button id="btn-save-log-url" class="px-3 py-1.5 bg-emerald-700 text-white rounded-lg text-xs font-bold">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: カスタムショートカット -->
   <div id="modalShortcut" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
       <div class="bg-indigo-900 px-4 py-3 text-white flex justify-between items-center">
@@ -373,43 +372,35 @@
       </div>
 
       <div class="p-4 space-y-4">
-        <p class="text-xs text-slate-500">Classroom と Teams 以外の残り2つのショートカットリンクを自由に変更できます。</p>
-        
-        <!-- カード3の設定 -->
         <div class="p-3 bg-slate-50 rounded-lg border space-y-2">
           <span class="text-xs font-bold text-indigo-700">ショートカット 3</span>
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">表示名</label>
-            <input type="text" id="shortcut-name-3" placeholder="例: Googleカレンダー" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+            <input type="text" id="shortcut-name-3" placeholder="表示名" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">URL</label>
-            <input type="url" id="shortcut-url-3" placeholder="https://calendar.google.com" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+            <input type="url" id="shortcut-url-3" placeholder="https://" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
           </div>
         </div>
 
-        <!-- カード4の設定 -->
         <div class="p-3 bg-slate-50 rounded-lg border space-y-2">
           <span class="text-xs font-bold text-indigo-700">ショートカット 4</span>
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">表示名</label>
-            <input type="text" id="shortcut-name-4" placeholder="例: Moodle" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+            <input type="text" id="shortcut-name-4" placeholder="表示名" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-0.5">URL</label>
-            <input type="url" id="shortcut-url-4" placeholder="https://moodle.org" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
+            <input type="url" id="shortcut-url-4" placeholder="https://" class="w-full border p-1.5 rounded text-xs outline-none bg-white">
           </div>
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t">
           <button id="btn-cancel-shortcut-modal" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
-          <button id="btn-save-shortcut-modal" class="px-3 py-1.5 bg-indigo-900 text-white rounded-lg text-xs font-bold">設定を保存</button>
+          <button id="btn-save-shortcut-modal" class="px-3 py-1.5 bg-indigo-900 text-white rounded-lg text-xs font-bold">保存</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: 個人課題追加・編集 -->
+  <!-- Modal: 個人課題追加 -->
   <div id="modalTask" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
       <div class="bg-slate-900 px-4 py-3 text-white flex justify-between items-center">
@@ -460,7 +451,7 @@
     </div>
   </div>
 
-  <!-- Modal: 黒板掲示の投稿 -->
+  <!-- Modal: 黒板投稿 -->
   <div id="modalBoard" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border">
       <div class="bg-emerald-900 px-4 py-3 text-white flex justify-between items-center">
@@ -483,39 +474,37 @@
 
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-1">タイトル / 科目名 *</label>
-          <input type="text" id="boardTitle" required placeholder="例: 数学I 復習小テスト / 文化祭準備" class="w-full border p-2 rounded-lg text-xs outline-none">
+          <input type="text" id="boardTitle" required class="w-full border p-2 rounded-lg text-xs outline-none">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">実施・提出・イベント日時 *</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">日時 *</label>
           <input type="datetime-local" id="boardDate" required class="w-full border p-2 rounded-lg text-xs outline-none">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">詳細・メモ・持ち物など</label>
-          <textarea id="boardContent" rows="3" placeholder="教科書 P.20〜35 範囲 / 体育館集合" class="w-full border p-2 rounded-lg text-xs outline-none"></textarea>
+          <label class="block text-xs font-bold text-slate-600 mb-1">詳細・メモなど</label>
+          <textarea id="boardContent" rows="3" class="w-full border p-2 rounded-lg text-xs outline-none"></textarea>
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t">
           <button type="button" id="btn-cancel-board-modal" class="px-3 py-1.5 border rounded-lg text-xs">キャンセル</button>
-          <button type="submit" class="px-3 py-1.5 bg-emerald-800 text-white rounded-lg text-xs font-bold">黒板に書き込む</button>
+          <button type="submit" class="px-3 py-1.5 bg-emerald-800 text-white rounded-lg text-xs font-bold">書き込む</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: ユーザー名設定 -->
+  <!-- Modal: 名前設定 -->
   <div id="modalName" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-xs p-4 space-y-3 border">
       <h3 class="font-bold text-sm text-slate-800">表示名の設定</h3>
       <input type="text" id="userNameInput" placeholder="例: 山田太郎" class="w-full border p-2 rounded-lg text-xs outline-none">
-      <div class="flex justify-end gap-2">
-        <button id="btn-save-username" class="w-full py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold">決定</button>
-      </div>
+      <button id="btn-save-username" class="w-full py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold">決定</button>
     </div>
   </div>
 
-  <!-- Firebase v9 (Modular SDK) -->
+  <!-- Firebase & アプリロジック -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { 
@@ -529,7 +518,6 @@
       serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDgjxiw-m0Vgk1X-yWRKrGsjXTAS4ZpDAM",
       authDomain: "telephone-99ed5.firebaseapp.com",
@@ -540,26 +528,33 @@
       measurementId: "G-VBNN97R90E"
     };
 
-    // Initialize Firebase & Firestore
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    /* --- アプリ状態管理 --- */
     let userName = localStorage.getItem('edutask_username') || ('生徒' + Math.floor(Math.random() * 899 + 100));
+    let gasUrl = localStorage.getItem('edutask_gas_url') || '';
     let tasks = JSON.parse(localStorage.getItem('edutask_tasks_v2')) || [
-      { id: '1', title: '【例】数学ワーク 提出', subject: '数学', status: 'todo', dueDate: '2026-10-30T23:59' }
+      { id: '1', title: '【例】物理学演習 レポート第2回', subject: '理科', status: 'todo', dueDate: '2026-11-20T23:59' }
     ];
     let boardItems = [];
     let calendarInstance = null;
-    let statusChart = null;
-    let subjectChart = null;
 
-    const statusConfig = {
-      todo: { label: '未着手', bg: 'bg-red-50 text-red-700', borderClass: 'status-border-todo' },
-      doing: { label: '進行中', bg: 'bg-amber-50 text-amber-700', borderClass: 'status-border-doing' },
-      submitted: { label: '提出済み', bg: 'bg-blue-50 text-blue-700', borderClass: 'status-border-submitted' },
-      done: { label: '完了', bg: 'bg-emerald-50 text-emerald-700', borderClass: 'status-border-done' },
-      overdue: { label: '期限超過', bg: 'bg-purple-50 text-purple-700', borderClass: 'status-border-overdue' }
+    // グローバル関数として公開
+    window.sendUsageLog = function(action, detail = '') {
+      if (!gasUrl) return;
+      const isMobile = window.innerWidth <= 768 ? 'スマホ' : 'PC';
+      
+      fetch(gasUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userName: userName,
+          action: action,
+          detail: detail,
+          device: isMobile
+        })
+      }).catch(err => console.error('ログ送信エラー:', err));
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -567,1083 +562,192 @@
       initShortcuts();
       renderTasks();
       initGeminiLauncher();
-      initEmbedCalendar();
       initFirebaseListeners();
       initCalendar();
       setupEventListeners();
+
+      // アプリ起動（ページ訪問）ログ
+      window.sendUsageLog('アプリ起動', 'ページオープン');
     });
 
-    /* --- ショートカットリンク管理 --- */
-    function initShortcuts() {
-      const sc3 = JSON.parse(localStorage.getItem('edutask_sc_3')) || { name: 'Googleカレンダー', url: 'https://calendar.google.com' };
-      const sc4 = JSON.parse(localStorage.getItem('edutask_sc_4')) || { name: 'Moodle', url: 'https://moodle.org' };
-
-      updateShortcutCard(3, sc3.name, sc3.url);
-      updateShortcutCard(4, sc4.name, sc4.url);
-    }
-
-    function updateShortcutCard(num, name, url) {
-      const card = document.getElementById(`shortcut-card-${num}`);
-      const label = document.getElementById(`shortcut-label-${num}`);
-      if (card) card.href = url || '#';
-      if (label) label.innerText = name || `リンク ${num}`;
-    }
-
-    function openShortcutModal() {
-      const sc3 = JSON.parse(localStorage.getItem('edutask_sc_3')) || { name: 'Googleカレンダー', url: 'https://calendar.google.com' };
-      const sc4 = JSON.parse(localStorage.getItem('edutask_sc_4')) || { name: 'Moodle', url: 'https://moodle.org' };
-
-      document.getElementById('shortcut-name-3').value = sc3.name;
-      document.getElementById('shortcut-url-3').value = sc3.url;
-      document.getElementById('shortcut-name-4').value = sc4.name;
-      document.getElementById('shortcut-url-4').value = sc4.url;
-
-      document.getElementById('modalShortcut').classList.remove('hidden');
-    }
-
-    function saveShortcutSettings() {
-      const sc3 = {
-        name: document.getElementById('shortcut-name-3').value.trim() || 'リンク 3',
-        url: document.getElementById('shortcut-url-3').value.trim() || 'https://'
-      };
-      const sc4 = {
-        name: document.getElementById('shortcut-name-4').value.trim() || 'リンク 4',
-        url: document.getElementById('shortcut-url-4').value.trim() || 'https://'
-      };
-
-      localStorage.setItem('edutask_sc_3', JSON.stringify(sc3));
-      localStorage.setItem('edutask_sc_4', JSON.stringify(sc4));
-
-      updateShortcutCard(3, sc3.name, sc3.url);
-      updateShortcutCard(4, sc4.name, sc4.url);
-
-      document.getElementById('modalShortcut').classList.add('hidden');
-    }
-
-    /* --- イベントリスナーの一括設定 --- */
-    function setupEventListeners() {
-      // タブ切り替えイベント設定
-      const tabs = ['portal', 'board', 'chat', 'tasks', 'calendar'];
-      tabs.forEach(tab => {
-        document.getElementById(`tab-${tab}-pc`)?.addEventListener('click', () => switchTab(tab));
-        document.getElementById(`tab-${tab}-mb`)?.addEventListener('click', () => switchTab(tab));
-      });
-
-      // カスタムショートカット設定モーダル
-      document.getElementById('btn-open-shortcut-modal')?.addEventListener('click', openShortcutModal);
-      document.getElementById('btn-close-shortcut-modal')?.addEventListener('click', () => document.getElementById('modalShortcut').classList.add('hidden'));
-      document.getElementById('btn-cancel-shortcut-modal')?.addEventListener('click', () => document.getElementById('modalShortcut').classList.add('hidden'));
-      document.getElementById('btn-save-shortcut-modal')?.addEventListener('click', saveShortcutSettings);
-
-      // ヘッダー固定の「黒板投稿」ボタン
-      document.getElementById('btn-header-board-pc')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
-      document.getElementById('btn-header-board-mb')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
-
-      // ユーザー名変更モーダル
-      document.getElementById('btn-open-name-modal-pc')?.addEventListener('click', openNameModal);
-      document.getElementById('btn-open-name-modal-mb')?.addEventListener('click', openNameModal);
-      document.getElementById('btn-save-username')?.addEventListener('click', saveUserName);
-
-      // カレンダーID保存
-      document.getElementById('btn-save-calendar-settings')?.addEventListener('click', saveCalendarSettings);
-
-      // 黒板掲示モーダル
-      document.getElementById('btn-open-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
-      document.getElementById('btn-close-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
-      document.getElementById('btn-cancel-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
-      document.getElementById('boardForm')?.addEventListener('submit', saveBoardItem);
-
-      // チャット送信
-      document.getElementById('chat-form')?.addEventListener('submit', sendChatMessage);
-
-      // 課題管理モーダル＆表示切り替え
-      document.getElementById('btn-open-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.remove('hidden'));
-      document.getElementById('btn-close-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
-      document.getElementById('btn-cancel-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
-      document.getElementById('taskForm')?.addEventListener('submit', saveTask);
-
-      document.getElementById('btn-kanban')?.addEventListener('click', () => setViewMode('kanban'));
-      document.getElementById('btn-list')?.addEventListener('click', () => setViewMode('list'));
-
-      document.getElementById('searchQuery')?.addEventListener('input', renderTasks);
-      document.getElementById('filterSubject')?.addEventListener('change', renderTasks);
-    }
-
-    /* --- Google 埋め込みカレンダー管理 --- */
-    function initEmbedCalendar() {
-      const calIdInput = document.getElementById('calendar-id');
-      const userCalId = localStorage.getItem('portal_cal_id') || 'rf24059q@st.omu.ac.jp';
-      if (calIdInput) calIdInput.value = userCalId;
-      updateCalendarIframe(userCalId);
-    }
-
-    function updateCalendarIframe(email) {
-      const calIframe = document.getElementById('calendar-iframe');
-      const calStatusText = document.getElementById('cal-status-text');
-      if (!email) {
-        if (calStatusText) calStatusText.innerText = '※カレンダーIDを入力してください';
-        return;
-      }
-      const encodedEmail = encodeURIComponent(email);
-      if (calIframe) calIframe.src = `https://calendar.google.com/calendar/embed?src=${encodedEmail}&ctz=Asia%2FTokyo`;
-      if (calStatusText) calStatusText.innerText = `表示中: ${email}`;
-    }
-
-    function saveCalendarSettings() {
-      const email = document.getElementById('calendar-id').value.trim();
-      localStorage.setItem('portal_cal_id', email);
-      updateCalendarIframe(email);
-      alert('カレンダーIDを保存しました');
-    }
-
-    /* --- ユーザー名管理 --- */
     function updateUserDisplayName() {
-      localStorage.setItem('edutask_username', userName);
       document.getElementById('user-display-name-pc').innerText = userName;
       document.getElementById('user-display-name-mb').innerText = userName;
     }
 
-    function openNameModal() {
-      document.getElementById('userNameInput').value = userName;
-      document.getElementById('modalName').classList.remove('hidden');
+    function initShortcuts() {
+      const sc3 = JSON.parse(localStorage.getItem('edutask_sc_3')) || { name: 'Googleカレンダー', url: 'https://calendar.google.com' };
+      const sc4 = JSON.parse(localStorage.getItem('edutask_sc_4')) || { name: 'Moodle', url: 'https://moodle.org' };
+
+      const card3 = document.getElementById('shortcut-card-3');
+      const card4 = document.getElementById('shortcut-card-4');
+      if (card3) card3.href = sc3.url;
+      if (card4) card4.href = sc4.url;
+      document.getElementById('shortcut-label-3').innerText = sc3.name;
+      document.getElementById('shortcut-label-4').innerText = sc4.name;
     }
 
-    function saveUserName() {
-      const val = document.getElementById('userNameInput').value.trim();
-      if (val) {
-        userName = val;
-        updateUserDisplayName();
-      }
-      document.getElementById('modalName').classList.add('hidden');
-    }
-
-    /* --- タブ切り替え --- */
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('bg-white', 'text-slate-900', 'font-bold', 'shadow-sm');
-        btn.classList.add('text-slate-600');
-      });
-      const pcTab = document.getElementById(`tab-${tabName}-pc`);
-      if (pcTab) {
-        pcTab.classList.add('bg-white', 'text-slate-900', 'font-bold', 'shadow-sm');
-        pcTab.classList.remove('text-slate-600');
-      }
-
-      const mobileNavBtns = document.querySelectorAll('nav.md\\:hidden button');
-      mobileNavBtns.forEach(btn => btn.className = 'flex flex-col items-center gap-0.5 text-slate-500');
-      const mbTab = document.getElementById(`tab-${tabName}-mb`);
-      if (mbTab) {
-        mbTab.className = 'flex flex-col items-center gap-0.5 text-slate-900 font-bold';
-      }
-
-      const titles = { portal: 'ポータル', board: '黒板掲示板', chat: 'クラスチャット', tasks: '個人課題管理', calendar: '共有カレンダー' };
-      document.getElementById('mobile-header-title').innerText = titles[tabName] || 'ポータル';
-
-      document.getElementById(`section-${tabName}`).classList.remove('hidden');
-
-      if (tabName === 'calendar' && calendarInstance) {
-        setTimeout(() => calendarInstance.render(), 100);
-      } else if (tabName === 'tasks') {
-        renderAnalytics();
-      }
-    }
-
-    /* --- Gemini AI アシスタント --- */
     function initGeminiLauncher() {
-      document.getElementById('send-to-gemini-btn')?.addEventListener('click', async () => {
-        const input = document.getElementById('task-title-input').value.trim();
-        if (!input) return alert('課題名を入力してください！');
+      document.getElementById('send-to-gemini-btn').addEventListener('click', async () => {
+        const taskName = document.getElementById('task-title-input').value.trim();
+        if (!taskName) return alert('課題名を入力してください！');
 
-        const prompt = `あなたは大学・学校のTAです。課題「${input}」について、構成案・概要・執筆ステップを提示してください。`;
-        try {
-          await navigator.clipboard.writeText(prompt);
-          alert('指示文をコピーしました！Geminiが開いたら Ctrl+V (Cmd+V) で貼り付けてください。');
-        } catch (e) {}
+        window.sendUsageLog('Gemini起動', taskName);
+
+        const prompt = `あなたは大学の TA です。以下の課題について構成案と骨子を作成してください。\n【対象課題】\n${taskName}`;
+        try { await navigator.clipboard.writeText(prompt); } catch (e) {}
         window.open('https://gemini.google.com/app', '_blank');
       });
     }
 
-    /* --- Firebase リアルタイム同期（チャット & 黒板） --- */
     function initFirebaseListeners() {
-      // 1. チャット受信
-      const chatQuery = query(collection(db, "chats"), orderBy("timestamp", "asc"), limit(50));
-      onSnapshot(chatQuery, (snapshot) => {
-        const container = document.getElementById('chat-messages-container');
-        if (!container) return;
+      onSnapshot(query(collection(db, "board"), orderBy("timestamp", "desc"), limit(20)), (snapshot) => {
+        boardItems = [];
+        const container = document.getElementById('board-items-container');
         container.innerHTML = '';
         snapshot.forEach((doc) => {
           const data = doc.data();
-          const isMe = data.sender === userName;
-          const div = document.createElement('div');
-          div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-          div.innerHTML = `
-            <span class="text-[10px] text-slate-400 px-1">${escapeHtml(data.sender || '匿名')}</span>
-            <div class="px-3 py-2 rounded-xl text-xs max-w-[80%] ${isMe ? 'bg-slate-900 text-white rounded-br-none' : 'bg-white border text-slate-800 rounded-bl-none shadow-sm'}">
-              ${escapeHtml(data.message)}
-            </div>
-          `;
-          container.appendChild(div);
-        });
-        container.scrollTop = container.scrollHeight;
-      });
-
-      // 2. 黒板掲示板受信
-      const boardQuery = query(collection(db, "board_items"), orderBy("date", "asc"));
-      onSnapshot(boardQuery, (snapshot) => {
-        boardItems = [];
-        const container = document.getElementById('board-items-container');
-        if (!container) return;
-        container.innerHTML = '';
-        if (snapshot.empty) {
-          container.innerHTML = `<div class="col-span-full text-center chalk-text-white py-8 text-xs">現在、黒板の連絡事項はありません。</div>`;
-          return;
-        }
-        snapshot.forEach((doc) => {
-          const item = { id: doc.id, ...doc.data() };
-          boardItems.push(item);
-
+          boardItems.push({ id: doc.id, ...data });
           const card = document.createElement('div');
-          card.className = "bg-amber-950/40 border border-amber-600/40 p-3 rounded-xl relative space-y-1.5";
+          card.className = 'bg-emerald-950/40 border border-emerald-700/50 p-3.5 rounded-xl space-y-1.5';
           card.innerHTML = `
-            <div class="flex justify-between items-start">
-              <span class="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/20 chalk-text-yellow border border-amber-500/40">${escapeHtml(item.type)}</span>
-              <span class="text-[10px] chalk-text-white opacity-70">${item.date ? item.date.replace('T', ' ') : ''}</span>
+            <div class="flex justify-between items-start gap-2">
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-400 text-amber-950">${data.type}</span>
+              <span class="text-[10px] chalk-text-white opacity-70">${data.date ? data.date.replace('T', ' ') : ''}</span>
             </div>
-            <h4 class="font-bold text-sm chalk-text-white">${escapeHtml(item.title)}</h4>
-            <p class="text-xs chalk-text-white opacity-90 leading-relaxed">${escapeHtml(item.content || '')}</p>
-            <div class="text-[10px] chalk-text-white opacity-60 pt-1 text-right">投稿: ${escapeHtml(item.author || '匿名')}</div>
+            <div class="chalk-text-yellow font-bold text-sm">${data.title}</div>
+            ${data.content ? `<div class="chalk-text-white text-xs whitespace-pre-wrap">${data.content}</div>` : ''}
+            <div class="text-[10px] chalk-text-white opacity-60 text-right">投稿: ${data.author}</div>
           `;
           container.appendChild(card);
         });
-        if (calendarInstance) updateCalendarEvents();
+        if (calendarInstance) calendarInstance.refetchEvents();
+      });
+
+      onSnapshot(query(collection(db, "chats"), orderBy("timestamp", "asc"), limit(50)), (snapshot) => {
+        const container = document.getElementById('chat-messages-container');
+        container.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const isMe = data.author === userName;
+          const msg = document.createElement('div');
+          msg.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+          msg.innerHTML = `
+            <span class="text-[10px] text-slate-400 mb-0.5">${data.author}</span>
+            <div class="max-w-[80%] px-3 py-2 rounded-2xl text-xs ${isMe ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border text-slate-800 rounded-bl-none'}">
+              ${data.text}
+            </div>
+          `;
+          container.appendChild(msg);
+        });
+        container.scrollTop = container.scrollHeight;
       });
     }
 
-    async function sendChatMessage(e) {
+    document.getElementById('chat-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const input = document.getElementById('chat-input');
-      const msg = input.value.trim();
-      if (!msg) return;
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      window.sendUsageLog('チャット送信', text.substring(0, 15) + '...');
+      await addDoc(collection(db, "chats"), { text, author: userName, timestamp: serverTimestamp() });
+    });
 
-      try {
-        await addDoc(collection(db, "chats"), {
-          sender: userName,
-          message: msg,
-          timestamp: serverTimestamp()
-        });
-        input.value = '';
-      } catch (err) {
-        console.error("チャット送信エラー:", err);
-      }
-    }
-
-    async function saveBoardItem(e) {
+    document.getElementById('boardForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const type = document.getElementById('boardType').value;
-      const title = document.getElementById('boardTitle').value;
+      const title = document.getElementById('boardTitle').value.trim();
       const date = document.getElementById('boardDate').value;
-      const content = document.getElementById('boardContent').value;
+      const content = document.getElementById('boardContent').value.trim();
 
-      try {
-        await addDoc(collection(db, "board_items"), {
-          type, title, date, content,
-          author: userName,
-          createdAt: serverTimestamp()
-        });
-        document.getElementById('modalBoard').classList.add('hidden');
-        document.getElementById('boardForm').reset();
-      } catch (err) {
-        console.error("掲示投稿エラー:", err);
-      }
-    }
-
-    /* --- 個人課題管理 --- */
-    function setViewMode(mode) {
-      if (mode === 'kanban') {
-        document.getElementById('view-kanban').classList.remove('hidden');
-        document.getElementById('view-list').classList.add('hidden');
-      } else {
-        document.getElementById('view-kanban').classList.add('hidden');
-        document.getElementById('view-list').classList.remove('hidden');
-      }
-    }
+      window.sendUsageLog('黒板書き込み', `${type}: ${title}`);
+      await addDoc(collection(db, "board"), { type, title, date, content, author: userName, timestamp: serverTimestamp() });
+      document.getElementById('modalBoard').classList.add('hidden');
+    });
 
     function renderTasks() {
       localStorage.setItem('edutask_tasks_v2', JSON.stringify(tasks));
-      ['todo', 'doing', 'submitted', 'done'].forEach(s => {
-        const el = document.getElementById(`container-${s}`);
-        if (el) el.innerHTML = '';
-      });
-
-      const now = new Date();
-      tasks.forEach(task => {
-        const isOverdue = new Date(task.dueDate) < now && task.status !== 'done' && task.status !== 'submitted';
-        const stConf = isOverdue ? statusConfig.overdue : (statusConfig[task.status] || statusConfig.todo);
-
-        const card = document.createElement('div');
-        card.className = `bg-white p-2.5 rounded-lg border border-slate-200 ${stConf.borderClass} space-y-1 shadow-sm text-xs`;
-        card.innerHTML = `
-          <div class="flex justify-between items-center">
-            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${stConf.bg}">${isOverdue ? '期限超過' : stConf.label}</span>
-            <span class="text-[10px] text-slate-400">${escapeHtml(task.subject)}</span>
-          </div>
-          <div class="font-bold text-slate-800">${escapeHtml(task.title)}</div>
-          <div class="text-[10px] text-slate-400"><i class="fa-regular fa-clock"></i> ${(task.dueDate||'').replace('T',' ')}</div>
-          <div class="flex justify-end gap-2 pt-1 border-t text-[10px]">
-            <button class="btn-delete-task text-red-500" data-id="${task.id}">削除</button>
-          </div>
-        `;
-        const container = document.getElementById(`container-${task.status}`);
-        if (container) container.appendChild(card);
-      });
-
-      // 削除ボタンイベントバインド
-      document.querySelectorAll('.btn-delete-task').forEach(btn => {
-        btn.addEventListener('click', (e) => deleteTask(e.target.getAttribute('data-id')));
-      });
-
-      if (calendarInstance) updateCalendarEvents();
-      renderAnalytics();
-    }
-
-    function saveTask(e) {
-      e.preventDefault();
-      tasks.push({
-        id: Date.now().toString(),
-        title: document.getElementById('taskTitle').value,
-        subject: document.getElementById('taskSubject').value,
-        status: document.getElementById('taskStatus').value,
-        dueDate: document.getElementById('taskDueDate').value
-      });
-      renderTasks();
-      document.getElementById('modalTask').classList.add('hidden');
-      document.getElementById('taskForm').reset();
-    }
-
-    function deleteTask(id) {
-      tasks = tasks.filter(t => t.id !== id);
-      renderTasks();
-    }
-
-    /* --- 課題進捗レポートグラフ描画 --- */
-    function renderAnalytics() {
-      const ctxStatus = document.getElementById('chart-status');
-      const ctxSubject = document.getElementById('chart-subject');
-      if (!ctxStatus || !ctxSubject) return;
-
-      if (statusChart) statusChart.destroy();
-      if (subjectChart) subjectChart.destroy();
-
-      const counts = { todo: 0, doing: 0, submitted: 0, done: 0 };
-      const subCounts = {};
-
-      tasks.forEach(t => {
-        if (counts[t.status] !== undefined) counts[t.status]++;
-        subCounts[t.subject] = (subCounts[t.subject] || 0) + 1;
-      });
-
-      statusChart = new Chart(ctxStatus, {
-        type: 'doughnut',
-        data: {
-          labels: ['未着手', '進行中', '提出済み', '完了'],
-          datasets: [{ data: [counts.todo, counts.doing, counts.submitted, counts.done], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'] }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-
-      subjectChart = new Chart(ctxSubject, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(subCounts),
-          datasets: [{ label: '課題数', data: Object.values(subCounts), backgroundColor: '#1e293b' }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+      ['todo', 'doing', 'submitted', 'done'].forEach(st => {
+        const container = document.getElementById(`container-${st}`);
+        container.innerHTML = '';
+        const list = tasks.filter(t => t.status === st);
+        document.getElementById(`count-${st}`).innerText = list.length;
+        list.forEach(t => {
+          const card = document.createElement('div');
+          card.className = 'bg-white p-3 rounded-xl border shadow-sm space-y-1';
+          card.innerHTML = `
+            <div class="font-bold text-xs">${t.title}</div>
+            <div class="text-[10px] text-slate-400">${t.dueDate ? t.dueDate.replace('T', ' ') : ''}</div>
+          `;
+          container.appendChild(card);
+        });
       });
     }
 
-    /* --- 共有カレンダー --- */
     function initCalendar() {
-      const calendarEl = document.getElementById('calendar');
-      if (!calendarEl) return;
-      calendarInstance = new FullCalendar.Calendar(calendarEl, {
+      calendarInstance = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth',
         locale: 'ja',
-        height: 'auto',
-        headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
-        events: getCalendarEvents()
+        events: function(info, cb) {
+          const events = tasks.map(t => ({ title: `[課題] ${t.title}`, start: t.dueDate, color: '#4f46e5' }));
+          boardItems.forEach(b => events.push({ title: `[黒板] ${b.title}`, start: b.date, color: '#059669' }));
+          cb(events);
+        }
       });
       calendarInstance.render();
     }
 
-    function getCalendarEvents() {
-      const events = [];
-      boardItems.forEach(b => {
-        if (b.date) {
-          events.push({
-            title: `[黒板] ${b.title}`,
-            start: b.date,
-            backgroundColor: '#4f46e5',
-            borderColor: '#4f46e5'
-          });
-        }
-      });
-      tasks.forEach(t => {
-        if (t.dueDate) {
-          events.push({
-            title: `[課題] ${t.title}`,
-            start: t.dueDate,
-            backgroundColor: '#334155',
-            borderColor: '#334155'
-          });
-        }
-      });
-      return events;
-    }
-
-    function updateCalendarEvents() {
-      if (!calendarInstance) return;
-      calendarInstance.removeAllEvents();
-      calendarInstance.addEventSource(getCalendarEvents());
-    }
-
-    function escapeHtml(str) {
-      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
-  </script>
-
-  <!-- ▼ ここから管理者専用拡張モジュール（CSV書き出し＆チャット・掲示板リセット） ▼ -->
-  <script type="module">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      doc,
-      setDoc,
-      getDocs,
-      deleteDoc,
-      query,
-      orderBy,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDgjxiw-m0Vgk1X-yWRKrGsjXTAS4ZpDAM",
-      authDomain: "telephone-99ed5.firebaseapp.com",
-      projectId: "telephone-99ed5",
-      storageBucket: "telephone-99ed5.firebasestorage.app",
-      messagingSenderId: "609918192167",
-      appId: "1:609918192167:web:4361772de1f08b029edc02",
-      measurementId: "G-VBNN97R90E"
-    };
-
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    let uid = localStorage.getItem('edutask_userid');
-    if (!uid) {
-      uid = 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-      localStorage.setItem('edutask_userid', uid);
-    }
-
-    async function syncCurrentUser() {
-      try {
-        const userName = localStorage.getItem('edutask_username') || '未設定';
-        const calId = localStorage.getItem('portal_cal_id') || '';
-        const sc3 = JSON.parse(localStorage.getItem('edutask_sc_3') || '{}');
-        const sc4 = JSON.parse(localStorage.getItem('edutask_sc_4') || '{}');
-        const tasks = JSON.parse(localStorage.getItem('edutask_tasks_v2') || '[]');
-
-        await setDoc(doc(db, "users", uid), {
-          userId: uid,
-          userName: userName,
-          calendarId: calId,
-          shortcut3: sc3.name ? `${sc3.name} (${sc3.url})` : '',
-          shortcut4: sc4.name ? `${sc4.name} (${sc4.url})` : '',
-          taskCount: tasks.length,
-          tasks: tasks,
-          lastActive: serverTimestamp()
-        }, { merge: true });
-      } catch (e) {
-        console.error("ユーザー同期エラー:", e);
-      }
-    }
-
-    function downloadCSV(headers, rows, prefix) {
-      const lines = [headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(",")];
-      rows.forEach(r => {
-        lines.push(r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
-      });
-      const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${prefix}_${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    async function exportAllSummaryCSV() {
-      await syncCurrentUser();
-      const [usersSnap, chatsSnap, boardSnap] = await Promise.all([
-        getDocs(collection(db, "users")),
-        getDocs(query(collection(db, "chats"), orderBy("timestamp", "asc"))),
-        getDocs(query(collection(db, "board_items"), orderBy("date", "asc")))
-      ]);
-
-      const chatsByName = {};
-      chatsSnap.forEach(s => {
-        const c = s.data();
-        const name = c.sender || "匿名";
-        const time = c.timestamp?.toDate ? c.timestamp.toDate().toLocaleString('ja-JP') : '';
-        if (!chatsByName[name]) chatsByName[name] = [];
-        chatsByName[name].push(`[${time}] ${c.message || ''}`);
-      });
-
-      const boardsByName = {};
-      boardSnap.forEach(s => {
-        const b = s.data();
-        const name = b.author || "匿名";
-        if (!boardsByName[name]) boardsByName[name] = [];
-        boardsByName[name].push(`[${b.type || ''}] ${b.title || ''} (日時:${b.date || ''} / 詳細:${b.content || ''})`);
-      });
-
-      const headers = [
-        "ユーザーID", "表示名", "カレンダーID", "登録課題数", "個人課題一覧",
-        "チャット発言数", "チャット発言履歴", "掲示板投稿数", "掲示板投稿履歴",
-        "カスタムリンク3", "カスタムリンク4", "最終アクセス日時"
+    function setupEventListeners() {
+      const tabs = [
+        { pc: 'tab-portal-pc', mb: 'tab-portal-mb', sec: 'section-portal', name: 'ポータル' },
+        { pc: 'tab-board-pc', mb: 'tab-board-mb', sec: 'section-board', name: '黒板' },
+        { pc: 'tab-chat-pc', mb: 'tab-chat-mb', sec: 'section-chat', name: 'チャット' },
+        { pc: 'tab-tasks-pc', mb: 'tab-tasks-mb', sec: 'section-tasks', name: '課題' },
+        { pc: 'tab-calendar-pc', mb: 'tab-calendar-mb', sec: 'section-calendar', name: 'カレンダー' }
       ];
 
-      const rows = [];
-      const seenNames = new Set();
-
-      usersSnap.forEach(s => {
-        const d = s.data();
-        const name = d.userName || "";
-        if (name) seenNames.add(name);
-        const taskStr = (d.tasks || []).map(t => `[${t.subject}]${t.title}(${t.status}/締切:${t.dueDate || 'なし'})`).join(" | ");
-        const uChats = chatsByName[name] || [];
-        const uBoards = boardsByName[name] || [];
-        const lastTime = d.lastActive?.toDate ? d.lastActive.toDate().toLocaleString('ja-JP') : '';
-
-        rows.push([
-          d.userId || s.id, name, d.calendarId || "", d.taskCount || 0, taskStr,
-          uChats.length, uChats.join(" | "), uBoards.length, uBoards.join(" | "),
-          d.shortcut3 || "", d.shortcut4 || "", lastTime
-        ]);
-      });
-
-      const allNames = new Set([...Object.keys(chatsByName), ...Object.keys(boardsByName)]);
-      allNames.forEach(name => {
-        if (!seenNames.has(name)) {
-          const uChats = chatsByName[name] || [];
-          const uBoards = boardsByName[name] || [];
-          rows.push(["(未同期)", name, "", 0, "", uChats.length, uChats.join(" | "), uBoards.length, uBoards.join(" | "), "", "", ""]);
-        }
-      });
-
-      downloadCSV(headers, rows, "eduportal_all_users");
-    }
-
-    async function exportChatCSV() {
-      const snap = await getDocs(query(collection(db, "chats"), orderBy("timestamp", "asc")));
-      const headers = ["送信日時", "送信者名", "メッセージ内容"];
-      const rows = [];
-      snap.forEach(s => {
-        const c = s.data();
-        const time = c.timestamp?.toDate ? c.timestamp.toDate().toLocaleString('ja-JP') : '';
-        rows.push([time, c.sender || "匿名", c.message || ""]);
-      });
-      downloadCSV(headers, rows, "eduportal_chats");
-    }
-
-    async function exportBoardCSV() {
-      const snap = await getDocs(query(collection(db, "board_items"), orderBy("date", "asc")));
-      const headers = ["種別", "タイトル", "実施・締切日時", "詳細内容", "投稿者名", "投稿作成日時"];
-      const rows = [];
-      snap.forEach(s => {
-        const b = s.data();
-        const created = b.createdAt?.toDate ? b.createdAt.toDate().toLocaleString('ja-JP') : '';
-        rows.push([b.type || "", b.title || "", (b.date || "").replace("T", " "), b.content || "", b.author || "匿名", created]);
-      });
-      downloadCSV(headers, rows, "eduportal_board");
-    }
-
-    async function resetAllChats() {
-      if (!confirm("【警告】クラスチャットの履歴をすべて削除（リセット）しますか？\n※この操作は取り消せません。必要であれば先にCSV出力を行ってください。")) {
-        return;
-      }
-      try {
-        const snap = await getDocs(collection(db, "chats"));
-        if (snap.empty) {
-          alert("削除するチャット履歴がありません。");
-          return;
-        }
-        const deletePromises = [];
-        snap.forEach(d => deletePromises.push(deleteDoc(doc(db, "chats", d.id))));
-        await Promise.all(deletePromises);
-        alert(`チャット履歴（${deletePromises.length}件）をすべてリセットしました。`);
-      } catch (e) {
-        console.error("チャットリセットエラー:", e);
-        alert("チャットの削除に失敗しました。Firestoreの削除権限ルールを確認してください。");
-      }
-    }
-
-    async function resetAllBoard() {
-      if (!confirm("【警告】黒板掲示板の投稿をすべて削除（リセット）しますか？\n※この操作は取り消せません。必要であれば先にCSV出力を行ってください。")) {
-        return;
-      }
-      try {
-        const snap = await getDocs(collection(db, "board_items"));
-        if (snap.empty) {
-          alert("削除する掲示板の投稿がありません。");
-          return;
-        }
-        const deletePromises = [];
-        snap.forEach(d => deletePromises.push(deleteDoc(doc(db, "board_items", d.id))));
-        await Promise.all(deletePromises);
-        alert(`黒板掲示板の投稿（${deletePromises.length}件）をすべてリセットしました。`);
-      } catch (e) {
-        console.error("掲示板リセットエラー:", e);
-        alert("掲示板の削除に失敗しました。Firestoreの削除権限ルールを確認してください。");
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      syncCurrentUser();
-
-      ['btn-save-username', 'btn-save-calendar-settings', 'btn-save-shortcut-modal'].forEach(id => {
-        document.getElementById(id)?.addEventListener('click', () => setTimeout(syncCurrentUser, 300));
-      });
-      document.getElementById('taskForm')?.addEventListener('submit', () => setTimeout(syncCurrentUser, 300));
-      document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-delete-task')) setTimeout(syncCurrentUser, 300);
-      });
-
-      if (new URLSearchParams(window.location.search).get('admin') === '1') {
-        const box = document.createElement('div');
-        box.className = 'fixed bottom-16 md:bottom-4 right-4 z-50 bg-slate-900 text-white p-2.5 rounded-2xl shadow-xl border border-slate-700 flex flex-col gap-1.5';
-        box.innerHTML = `
-          <div class="text-[10px] font-bold text-indigo-300 px-1">管理者メニュー（CSV出力）</div>
-          <button id="ext-csv-all" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2 rounded-xl">全ユーザー統合CSV</button>
-          <div class="flex gap-1.5">
-            <button id="ext-csv-chat" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg">チャット一覧</button>
-            <button id="ext-csv-board" class="flex-1 bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg">掲示板一覧</button>
-          </div>
-          <div class="text-[10px] font-bold text-rose-300 px-1 pt-1 border-t border-slate-700 mt-0.5">データリセット（全削除）</div>
-          <div class="flex gap-1.5">
-            <button id="ext-reset-chat" class="flex-1 bg-rose-700 hover:bg-rose-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg">チャット初期化</button>
-            <button id="ext-reset-board" class="flex-1 bg-rose-700 hover:bg-rose-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg">掲示板初期化</button>
-          </div>
-        `;
-        document.body.appendChild(box);
-
-        document.getElementById('ext-csv-all').addEventListener('click', exportAllSummaryCSV);
-        document.getElementById('ext-csv-chat').addEventListener('click', exportChatCSV);
-        document.getElementById('ext-csv-board').addEventListener('click', exportBoardCSV);
-        document.getElementById('ext-reset-chat').addEventListener('click', resetAllChats);
-        document.getElementById('ext-reset-board').addEventListener('click', resetAllBoard);
-      }
-    });
-  </script>
-
-  <!-- ▼ ここから学習ツール拡張モジュール（タイマー・統合ToDoリスト・メモ機能＋黒板自動連携） ▼ -->
-  <script type="module">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      query,
-      orderBy,
-      onSnapshot
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDgjxiw-m0Vgk1X-yWRKrGsjXTAS4ZpDAM",
-      authDomain: "telephone-99ed5.firebaseapp.com",
-      projectId: "telephone-99ed5",
-      storageBucket: "telephone-99ed5.firebasestorage.app",
-      messagingSenderId: "609918192167",
-      appId: "1:609918192167:web:4361772de1f08b029edc02",
-      measurementId: "G-VBNN97R90E"
-    };
-
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const STORAGE_KEYS = {
-      todos: 'eduportal_ext_todos_v1',
-      memo: 'eduportal_ext_memo_v1',
-      syncedBoardIds: 'eduportal_ext_synced_board_ids_v1'
-    };
-
-    let todos = JSON.parse(localStorage.getItem(STORAGE_KEYS.todos) || '[]');
-    let memoText = localStorage.getItem(STORAGE_KEYS.memo) || '';
-    let syncedBoardIds = JSON.parse(localStorage.getItem(STORAGE_KEYS.syncedBoardIds) || '[]');
-
-    // タイマー状態
-    let timerTotalSec = 25 * 60;
-    let timerRemainSec = 25 * 60;
-    let timerInterval = null;
-
-    function escapeStr(str) {
-      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    function playAlarmBeep() {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        [0, 0.25, 0.5].forEach(delay => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.value = 880;
-          gain.gain.setValueAtTime(0.2, ctx.currentTime + delay);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.2);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(ctx.currentTime + delay);
-          osc.stop(ctx.currentTime + delay + 0.2);
-        });
-      } catch (e) {}
-    }
-
-    function formatTime(sec) {
-      const m = String(Math.floor(sec / 60)).padStart(2, '0');
-      const s = String(sec % 60).padStart(2, '0');
-      return `${m}:${s}`;
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      const isAdmin = new URLSearchParams(window.location.search).get('admin') === '1';
-      const btnBottomPos = isAdmin ? 'bottom-52 md:bottom-44' : 'bottom-16 md:bottom-5';
-
-      // フローティング起動ボタン
-      const launcher = document.createElement('button');
-      launcher.id = 'ext-study-tools-btn';
-      launcher.className = `fixed ${btnBottomPos} right-4 z-40 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-full shadow-lg flex items-center gap-2 transition`;
-      launcher.innerHTML = `<i class="fa-solid fa-toolbox"></i><span>学習ツール</span>`;
-      document.body.appendChild(launcher);
-
-      // ツールパネル本体（モーダル）
-      const panel = document.createElement('div');
-      panel.id = 'ext-study-tools-panel';
-      panel.className = 'fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3';
-      panel.innerHTML = `
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 flex flex-col max-h-[88vh]">
-          <!-- ヘッダー -->
-          <div class="bg-slate-900 text-white px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2 font-bold text-sm">
-              <i class="fa-solid fa-toolbox text-indigo-400"></i> パーソナル学習ツール
-            </div>
-            <button id="ext-tools-close" class="text-slate-400 hover:text-white text-base px-1">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-
-          <!-- 3機能切り替えタブ（タイマー・ToDo・メモ） -->
-          <div class="grid grid-cols-3 bg-slate-100 p-1 border-b border-slate-200 text-xs font-bold">
-            <button data-ext-tab="timer" class="ext-tab-btn py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-stopwatch"></i> タイマー
-            </button>
-            <button data-ext-tab="todo" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-square-check"></i> ToDo
-            </button>
-            <button data-ext-tab="memo" class="ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-note-sticky"></i> メモ
-            </button>
-          </div>
-
-          <!-- コンテンツエリア -->
-          <div class="p-4 overflow-y-auto flex-1 space-y-4">
-
-            <!-- 1. タイマー -->
-            <div id="ext-pane-timer" class="ext-pane space-y-4 text-center">
-              <div class="bg-slate-50 border border-slate-200 rounded-2xl py-6 px-4">
-                <div id="ext-timer-label" class="text-xs font-bold text-slate-500 mb-1">集中タイマー (25分)</div>
-                <div id="ext-timer-display" class="text-5xl font-mono font-extrabold text-slate-900 tracking-wider my-2">25:00</div>
-                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-4">
-                  <div id="ext-timer-bar" class="bg-indigo-600 h-full transition-all duration-300" style="width: 100%"></div>
-                </div>
-              </div>
-
-              <div class="flex justify-center gap-2">
-                <button id="ext-timer-start" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm">
-                  <i class="fa-solid fa-play"></i> スタート
-                </button>
-                <button id="ext-timer-pause" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm">
-                  <i class="fa-solid fa-pause"></i> 一時停止
-                </button>
-                <button id="ext-timer-reset" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5">
-                  <i class="fa-solid fa-rotate-left"></i> リセット
-                </button>
-              </div>
-
-              <div class="pt-2 border-t border-slate-100 space-y-2">
-                <div class="text-[11px] font-bold text-slate-500">プリセット / 時間設定（分）</div>
-                <div class="flex flex-wrap justify-center gap-1.5">
-                  <button data-mins="25" data-label="集中タイマー (25分)" class="ext-preset-btn px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-bold">25分 (ポモドーロ)</button>
-                  <button data-mins="5" data-label="休憩タイマー (5分)" class="ext-preset-btn px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold">5分 (休憩)</button>
-                  <button data-mins="50" data-label="講義・演習 (50分)" class="ext-preset-btn px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold">50分</button>
-                </div>
-                <div class="flex justify-center items-center gap-2 pt-1">
-                  <input type="number" id="ext-custom-mins" min="1" max="180" placeholder="分数" class="w-20 border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-center outline-none">
-                  <button id="ext-set-custom-mins" class="bg-slate-800 text-white text-xs font-bold px-3 py-1 rounded-lg hover:bg-slate-700">セット</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. ToDo（チェックリスト統合版） -->
-            <div id="ext-pane-todo" class="ext-pane hidden space-y-3">
-              <div class="text-[11px] bg-indigo-50 text-indigo-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                <i class="fa-solid fa-chalkboard"></i> 黒板に書き込まれた予定もToDoへ自動反映されます
-              </div>
-              <form id="ext-todo-form" class="flex gap-1.5">
-                <select id="ext-todo-priority" class="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white outline-none">
-                  <option value="high">高</option>
-                  <option value="mid" selected>中</option>
-                  <option value="low">低</option>
-                </select>
-                <input type="text" id="ext-todo-input" placeholder="やること・持ち物・確認項目を入力..." required class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs outline-none">
-                <button type="submit" class="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg text-xs">追加</button>
-              </form>
-
-              <!-- 達成率プログレスバー -->
-              <div class="space-y-1">
-                <div class="flex justify-between text-[11px] font-bold text-slate-600">
-                  <span id="ext-todo-stats">残り 0 件</span>
-                  <span id="ext-todo-progress-text">達成率 0% (0/0)</span>
-                </div>
-                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                  <div id="ext-todo-progress-bar" class="bg-emerald-600 h-full transition-all" style="width: 0%"></div>
-                </div>
-              </div>
-
-              <ul id="ext-todo-list" class="space-y-1.5 max-h-60 overflow-y-auto"></ul>
-
-              <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-100">
-                <button id="ext-todo-uncheck-all" class="text-slate-500 hover:text-slate-800 underline">すべてのチェックを外す</button>
-                <button id="ext-todo-clear-done" class="text-rose-600 hover:underline font-bold">完了済みを一括削除</button>
-              </div>
-            </div>
-
-            <!-- 3. メモ機能 -->
-            <div id="ext-pane-memo" class="ext-pane hidden space-y-2">
-              <div class="flex justify-between items-center">
-                <span class="text-[11px] text-slate-500"><i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i> 入力内容はブラウザに自動保存されます</span>
-                <div class="flex gap-2">
-                  <button id="ext-memo-copy" class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">コピー</button>
-                  <button id="ext-memo-clear" class="text-[11px] bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded font-bold text-rose-600">クリア</button>
-                </div>
-              </div>
-              <textarea id="ext-memo-textarea" rows="10" placeholder="授業の板書メモ、アイデア、URLなどを自由に書き留められます..." class="w-full border border-slate-300 rounded-xl p-3 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
-              <div class="text-right text-[10px] text-slate-400" id="ext-memo-count">0 文字</div>
-            </div>
-
-          </div>
-        </div>
-      `;
-      document.body.appendChild(panel);
-
-      // 開閉イベント
-      launcher.addEventListener('click', () => panel.classList.remove('hidden'));
-      document.getElementById('ext-tools-close').addEventListener('click', () => panel.classList.add('hidden'));
-      panel.addEventListener('click', (e) => { if (e.target === panel) panel.classList.add('hidden'); });
-
-      // タブ切替
-      document.querySelectorAll('.ext-tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const target = btn.getAttribute('data-ext-tab');
-          document.querySelectorAll('.ext-tab-btn').forEach(b => {
-            b.className = 'ext-tab-btn py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
-          });
-          btn.className = 'ext-tab-btn py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5';
-          document.querySelectorAll('.ext-pane').forEach(p => p.classList.add('hidden'));
-          document.getElementById(`ext-pane-${target}`).classList.remove('hidden');
-        });
-      });
-
-      /* --- タイマーロジック --- */
-      function updateTimerUI() {
-        document.getElementById('ext-timer-display').innerText = formatTime(timerRemainSec);
-        const pct = timerTotalSec > 0 ? (timerRemainSec / timerTotalSec) * 100 : 0;
-        document.getElementById('ext-timer-bar').style.width = `${pct}%`;
-      }
-
-      function setTimerMinutes(mins, label) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        timerTotalSec = mins * 60;
-        timerRemainSec = timerTotalSec;
-        if (label) document.getElementById('ext-timer-label').innerText = label;
-        updateTimerUI();
-      }
-
-      document.getElementById('ext-timer-start').addEventListener('click', () => {
-        if (timerInterval) return;
-        if (timerRemainSec <= 0) timerRemainSec = timerTotalSec;
-        timerInterval = setInterval(() => {
-          timerRemainSec--;
-          updateTimerUI();
-          if (timerRemainSec <= 0) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            playAlarmBeep();
-            alert('タイマーが終了しました！');
-          }
-        }, 1000);
-      });
-
-      document.getElementById('ext-timer-pause').addEventListener('click', () => {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      });
-
-      document.getElementById('ext-timer-reset').addEventListener('click', () => {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        timerRemainSec = timerTotalSec;
-        updateTimerUI();
-      });
-
-      document.querySelectorAll('.ext-preset-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          setTimerMinutes(Number(btn.getAttribute('data-mins')), btn.getAttribute('data-label'));
-        });
-      });
-
-      document.getElementById('ext-set-custom-mins').addEventListener('click', () => {
-        const val = parseInt(document.getElementById('ext-custom-mins').value, 10);
-        if (val && val > 0 && val <= 180) {
-          setTimerMinutes(val, `カスタムタイマー (${val}分)`);
-        }
-      });
-
-      /* --- 統合ToDoロジック --- */
-      function renderTodos() {
-        localStorage.setItem(STORAGE_KEYS.todos, JSON.stringify(todos));
-        const listEl = document.getElementById('ext-todo-list');
-        if (!listEl) return;
-        listEl.innerHTML = '';
-        const badgeMap = {
-          high: '<span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-[10px]">高</span>',
-          mid: '<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[10px]">中</span>',
-          low: '<span class="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold text-[10px]">低</span>'
+      tabs.forEach(t => {
+        const handler = () => {
+          document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+          document.getElementById(t.sec).classList.remove('hidden');
+          window.sendUsageLog('タブ切り替え', t.name);
+          if (t.sec === 'section-calendar' && calendarInstance) setTimeout(() => calendarInstance.updateSize(), 100);
         };
-        todos.forEach((item, idx) => {
-          const li = document.createElement('li');
-          li.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs';
-          li.innerHTML = `
-            <label class="flex items-center gap-2 cursor-pointer flex-1">
-              <input type="checkbox" ${item.done ? 'checked' : ''} data-idx="${idx}" class="ext-todo-chk rounded text-emerald-600">
-              ${badgeMap[item.priority] || badgeMap.mid}
-              <span class="${item.done ? 'line-through text-slate-400' : 'text-slate-800 font-medium'}">${escapeStr(item.text)}</span>
-            </label>
-            <button data-idx="${idx}" class="ext-todo-del text-slate-400 hover:text-rose-600 ml-2"><i class="fa-solid fa-trash-can"></i></button>
-          `;
-          listEl.appendChild(li);
-        });
-
-        const total = todos.length;
-        const doneCount = todos.filter(t => t.done).length;
-        const rem = total - doneCount;
-        const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
-
-        document.getElementById('ext-todo-stats').innerText = `残り ${rem} 件`;
-        document.getElementById('ext-todo-progress-text').innerText = `達成率 ${pct}% (${doneCount}/${total})`;
-        document.getElementById('ext-todo-progress-bar').style.width = `${pct}%`;
-
-        listEl.querySelectorAll('.ext-todo-chk').forEach(chk => {
-          chk.addEventListener('change', (e) => {
-            const i = Number(e.target.getAttribute('data-idx'));
-            todos[i].done = e.target.checked;
-            renderTodos();
-          });
-        });
-        listEl.querySelectorAll('.ext-todo-del').forEach(del => {
-          del.addEventListener('click', (e) => {
-            const i = Number(e.currentTarget.getAttribute('data-idx'));
-            todos.splice(i, 1);
-            renderTodos();
-          });
-        });
-      }
-
-      document.getElementById('ext-todo-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const input = document.getElementById('ext-todo-input');
-        const priority = document.getElementById('ext-todo-priority').value;
-        if (!input.value.trim()) return;
-        todos.unshift({ text: input.value.trim(), priority, done: false });
-        input.value = '';
-        renderTodos();
+        document.getElementById(t.pc)?.addEventListener('click', handler);
+        document.getElementById(t.mb)?.addEventListener('click', handler);
       });
 
-      document.getElementById('ext-todo-uncheck-all').addEventListener('click', () => {
-        todos.forEach(t => t.done = false);
-        renderTodos();
+      // ログ設定モーダル
+      const openLogModal = () => {
+        document.getElementById('gasUrlInput').value = gasUrl;
+        document.getElementById('modalLog').classList.remove('hidden');
+      };
+      document.getElementById('btn-open-log-modal-pc')?.addEventListener('click', openLogModal);
+      document.getElementById('btn-open-log-modal-mb')?.addEventListener('click', openLogModal);
+      document.getElementById('btn-close-log-modal')?.addEventListener('click', () => document.getElementById('modalLog').classList.add('hidden'));
+      document.getElementById('btn-save-log-url')?.addEventListener('click', () => {
+        gasUrl = document.getElementById('gasUrlInput').value.trim();
+        localStorage.setItem('edutask_gas_url', gasUrl);
+        alert('スプレッドシート連携URLを保存しました！');
+        document.getElementById('modalLog').classList.add('hidden');
       });
 
-      document.getElementById('ext-todo-clear-done').addEventListener('click', () => {
-        todos = todos.filter(t => !t.done);
-        renderTodos();
+      // その他モーダル開閉
+      document.getElementById('btn-header-board-pc')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
+      document.getElementById('btn-header-board-mb')?.addEventListener('click', () => document.getElementById('modalBoard').classList.remove('hidden'));
+      document.getElementById('btn-close-board-modal')?.addEventListener('click', () => document.getElementById('modalBoard').classList.add('hidden'));
+      document.getElementById('btn-open-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.remove('hidden'));
+      document.getElementById('btn-close-task-modal')?.addEventListener('click', () => document.getElementById('modalTask').classList.add('hidden'));
+      document.getElementById('btn-open-name-modal-pc')?.addEventListener('click', () => document.getElementById('modalName').classList.remove('hidden'));
+      document.getElementById('btn-open-name-modal-mb')?.addEventListener('click', () => document.getElementById('modalName').classList.remove('hidden'));
+      document.getElementById('btn-save-username')?.addEventListener('click', () => {
+        userName = document.getElementById('userNameInput').value.trim() || userName;
+        localStorage.setItem('edutask_username', userName);
+        updateUserDisplayName();
+        document.getElementById('modalName').classList.add('hidden');
       });
-
-      /* --- メモロジック --- */
-      const memoEl = document.getElementById('ext-memo-textarea');
-      const memoCountEl = document.getElementById('ext-memo-count');
-      memoEl.value = memoText;
-      memoCountEl.innerText = `${memoText.length} 文字`;
-
-      memoEl.addEventListener('input', () => {
-        localStorage.setItem(STORAGE_KEYS.memo, memoEl.value);
-        memoCountEl.innerText = `${memoEl.value.length} 文字`;
-      });
-
-      document.getElementById('ext-memo-copy').addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(memoEl.value);
-          alert('メモをクリップボードにコピーしました');
-        } catch (e) {}
-      });
-
-      document.getElementById('ext-memo-clear').addEventListener('click', () => {
-        if (confirm('メモの内容をすべて消去しますか？')) {
-          memoEl.value = '';
-          localStorage.setItem(STORAGE_KEYS.memo, '');
-          memoCountEl.innerText = '0 文字';
-        }
-      });
-
-      renderTodos();
-
-      /* --- 黒板掲示板の予定をToDoへ自動反映 --- */
-      const boardQuery = query(collection(db, "board_items"), orderBy("date", "asc"));
-      onSnapshot(boardQuery, (snapshot) => {
-        let updated = false;
-        snapshot.forEach((docSnap) => {
-          const id = docSnap.id;
-          if (!syncedBoardIds.includes(id)) {
-            const item = docSnap.data();
-            const dateStr = item.date ? ` (${item.date.replace('T', ' ')})` : '';
-            const label = `[黒板/${item.type || '連絡'}] ${item.title || '無題'}${dateStr}`;
-            const priority = (item.type === '小テスト' || item.type === 'プリント・課題') ? 'high' : 'mid';
-
-            todos.unshift({ text: label, priority, done: false, boardId: id });
-            syncedBoardIds.push(id);
-            updated = true;
-          }
-        });
-
-        if (updated) {
-          localStorage.setItem(STORAGE_KEYS.syncedBoardIds, JSON.stringify(syncedBoardIds));
-          renderTodos();
-        }
-      });
-    });
+    }
   </script>
 </body>
 </html>

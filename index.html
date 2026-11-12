@@ -593,71 +593,202 @@
       }
     }
 
-    /* --- 全ユーザー情報のCSV（スプレッドシート用）書き出し --- */
-    async function exportAllUsersToCSV() {
+    /* --- CSVダウンロード用ヘルパー関数 --- */
+    function downloadCSVFile(headers, rowsArray, filenamePrefix) {
+      const csvRows = [headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(",")];
+      rowsArray.forEach(row => {
+        const escaped = row.map(val => `"${String(val ?? "").replace(/"/g, '""')}"`);
+        csvRows.push(escaped.join(","));
+      });
+      const csvContent = "﻿" + csvRows.join("
+");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      const dateStr = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.setAttribute("download", `${filenamePrefix}_${dateStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    /* --- 1. 全ユーザー情報 + チャット履歴 + 掲示板投稿をまとめてCSV出力 --- */
+    async function exportAllDataToCSV() {
       try {
-        const querySnapshot = await getDocs(collection(db, "users"));
-        if (querySnapshot.empty) {
-          alert("ユーザーデータがまだありません。");
-          return;
-        }
+        const [usersSnap, chatsSnap, boardSnap] = await Promise.all([
+          getDocs(collection(db, "users")),
+          getDocs(query(collection(db, "chats"), orderBy("timestamp", "asc"))),
+          getDocs(query(collection(db, "board_items"), orderBy("date", "asc")))
+        ]);
+
+        // ユーザーごとのチャット発言と掲示板投稿を紐付け（表示名またはuserIdで照合）
+        const chatsByUserId = {};
+        const chatsByUserName = {};
+        chatsSnap.forEach(docSnap => {
+          const c = docSnap.data();
+          const timeStr = (c.timestamp && c.timestamp.toDate) ? c.timestamp.toDate().toLocaleString('ja-JP') : '';
+          const entry = `[${timeStr}] ${c.message || ''}`;
+          if (c.userId) {
+            if (!chatsByUserId[c.userId]) chatsByUserId[c.userId] = [];
+            chatsByUserId[c.userId].push(entry);
+          }
+          if (c.sender) {
+            if (!chatsByUserName[c.sender]) chatsByUserName[c.sender] = [];
+            chatsByUserName[c.sender].push(entry);
+          }
+        });
+
+        const boardsByUserId = {};
+        const boardsByUserName = {};
+        boardSnap.forEach(docSnap => {
+          const b = docSnap.data();
+          const entry = `[${b.type || ''}] ${b.title || ''} (日時:${b.date || '未定'} / 詳細:${b.content || 'なし'})`;
+          if (b.userId) {
+            if (!boardsByUserId[b.userId]) boardsByUserId[b.userId] = [];
+            boardsByUserId[b.userId].push(entry);
+          }
+          if (b.author) {
+            if (!boardsByUserName[b.author]) boardsByUserName[b.author] = [];
+            boardsByUserName[b.author].push(entry);
+          }
+        });
 
         const headers = [
           "ユーザーID",
           "表示名",
           "カレンダーID",
           "登録課題数",
-          "課題一覧（タイトル・教科・状態・締切）",
+          "個人課題一覧",
+          "チャット発言数",
+          "チャット発言履歴",
+          "掲示板投稿数",
+          "掲示板投稿履歴",
           "カスタムリンク3",
           "カスタムリンク4",
           "最終アクセス日時"
         ];
 
-        const rows = [headers.join(",")];
+        const rows = [];
+        const processedUserNames = new Set();
 
-        querySnapshot.forEach((docSnap) => {
+        usersSnap.forEach((docSnap) => {
           const d = docSnap.data();
+          const uid = d.userId || docSnap.id;
+          const uname = d.userName || "";
+          if (uname) processedUserNames.add(uname);
 
           const taskSummary = (d.tasks || []).map(t => 
             `[${t.subject}]${t.title}(${t.status}/締切:${t.dueDate || 'なし'})`
           ).join(" | ");
+
+          // userId一致を優先し、過去の投稿（userId未付与）は表示名一致で取得
+          const userChats = chatsByUserId[uid] || chatsByUserName[uname] || [];
+          const userBoards = boardsByUserId[uid] || boardsByUserName[uname] || [];
 
           let lastActiveStr = "";
           if (d.lastActive && d.lastActive.toDate) {
             lastActiveStr = d.lastActive.toDate().toLocaleString('ja-JP');
           }
 
-          const rowData = [
-            d.userId || docSnap.id,
-            d.userName || "",
+          rows.push([
+            uid,
+            uname,
             d.calendarId || "",
             d.taskCount || 0,
             taskSummary,
+            userChats.length,
+            userChats.join(" | "),
+            userBoards.length,
+            userBoards.join(" | "),
             d.shortcut3 || "",
             d.shortcut4 || "",
             lastActiveStr
-          ].map(val => `"${String(val).replace(/"/g, '""')}"`);
-
-          rows.push(rowData.join(","));
+          ]);
         });
 
-        // BOM付きUTF-8でCSVを生成（Excel/Googleスプレッドシートでの文字化け防止）
-        const csvContent = "\uFEFF" + rows.join("\n");
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
+        // users未登録でもチャット・掲示板に投稿履歴があるユーザーを補完出力
+        const extraNames = new Set([...Object.keys(chatsByUserName), ...Object.keys(boardsByUserName)]);
+        extraNames.forEach(uname => {
+          if (!processedUserNames.has(uname)) {
+            const userChats = chatsByUserName[uname] || [];
+            const userBoards = boardsByUserName[uname] || [];
+            rows.push([
+              "(未同期ユーザー)",
+              uname,
+              "",
+              0,
+              "",
+              userChats.length,
+              userChats.join(" | "),
+              userBoards.length,
+              userBoards.join(" | "),
+              "",
+              "",
+              ""
+            ]);
+          }
+        });
 
-        const link = document.createElement("a");
-        const dateStr = new Date().toISOString().slice(0, 10);
-        link.href = url;
-        link.setAttribute("download", `eduportal_users_${dateStr}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        if (rows.length === 0) {
+          alert("出力できるデータがまだありません。");
+          return;
+        }
 
+        downloadCSVFile(headers, rows, "eduportal_all_summary");
       } catch (err) {
         console.error("CSV出力エラー:", err);
         alert("データの取得に失敗しました。Firestoreのルール設定を確認してください。");
+      }
+    }
+
+    /* --- 2. チャット履歴のみを時系列CSV出力 --- */
+    async function exportChatHistoryToCSV() {
+      try {
+        const snap = await getDocs(query(collection(db, "chats"), orderBy("timestamp", "asc")));
+        if (snap.empty) return alert("チャット履歴がありません。");
+
+        const headers = ["送信日時", "ユーザーID", "送信者名", "メッセージ内容"];
+        const rows = [];
+        snap.forEach(docSnap => {
+          const c = docSnap.data();
+          const timeStr = (c.timestamp && c.timestamp.toDate) ? c.timestamp.toDate().toLocaleString('ja-JP') : '';
+          rows.push([timeStr, c.userId || "", c.sender || "匿名", c.message || ""]);
+        });
+        downloadCSVFile(headers, rows, "eduportal_chats");
+      } catch (err) {
+        console.error("チャットCSV出力エラー:", err);
+        alert("チャット履歴の取得に失敗しました。");
+      }
+    }
+
+    /* --- 3. 黒板掲示板の投稿のみをCSV出力 --- */
+    async function exportBoardHistoryToCSV() {
+      try {
+        const snap = await getDocs(query(collection(db, "board_items"), orderBy("date", "asc")));
+        if (snap.empty) return alert("掲示板の投稿がありません。");
+
+        const headers = ["種別", "タイトル", "実施・締切日時", "詳細内容", "ユーザーID", "投稿者名", "投稿作成日時"];
+        const rows = [];
+        snap.forEach(docSnap => {
+          const b = docSnap.data();
+          const createdStr = (b.createdAt && b.createdAt.toDate) ? b.createdAt.toDate().toLocaleString('ja-JP') : '';
+          rows.push([
+            b.type || "",
+            b.title || "",
+            (b.date || "").replace("T", " "),
+            b.content || "",
+            b.userId || "",
+            b.author || "匿名",
+            createdStr
+          ]);
+        });
+        downloadCSVFile(headers, rows, "eduportal_board");
+      } catch (err) {
+        console.error("掲示板CSV出力エラー:", err);
+        alert("掲示板データの取得に失敗しました。");
       }
     }
 
@@ -769,13 +900,31 @@
       document.getElementById('searchQuery')?.addEventListener('input', renderTasks);
       document.getElementById('filterSubject')?.addEventListener('change', renderTasks);
 
-      // 管理者モード（URLに ?admin=1 を付与した場合のみCSV書き出しボタンを表示）
+      // 管理者モード（URLに ?admin=1 を付与した場合のみCSV書き出しパネルを表示）
       if (new URLSearchParams(window.location.search).get('admin') === '1') {
-        const adminBtn = document.createElement('button');
-        adminBtn.innerHTML = '<i class="fa-solid fa-file-csv"></i> 全ユーザーCSV出力';
-        adminBtn.className = 'fixed bottom-16 md:bottom-4 right-4 z-50 bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2';
-        adminBtn.addEventListener('click', exportAllUsersToCSV);
-        document.body.appendChild(adminBtn);
+        const panel = document.createElement('div');
+        panel.className = 'fixed bottom-16 md:bottom-4 right-4 z-50 bg-slate-900/95 backdrop-blur text-white p-2.5 rounded-2xl shadow-xl border border-slate-700 flex flex-col gap-1.5';
+        panel.innerHTML = `
+          <div class="text-[10px] font-bold text-indigo-300 px-1 flex items-center gap-1">
+            <i class="fa-solid fa-shield-halved"></i> 管理者CSVエクスポート
+          </div>
+          <button id="btn-export-all-csv" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-2 transition">
+            <i class="fa-solid fa-users"></i> 全ユーザー統合CSV
+          </button>
+          <div class="flex gap-1.5">
+            <button id="btn-export-chat-csv" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center justify-center gap-1 transition">
+              <i class="fa-solid fa-comments"></i> チャット一覧
+            </button>
+            <button id="btn-export-board-csv" class="flex-1 bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center justify-center gap-1 transition">
+              <i class="fa-solid fa-chalkboard"></i> 掲示板一覧
+            </button>
+          </div>
+        `;
+        document.body.appendChild(panel);
+
+        document.getElementById('btn-export-all-csv')?.addEventListener('click', exportAllDataToCSV);
+        document.getElementById('btn-export-chat-csv')?.addEventListener('click', exportChatHistoryToCSV);
+        document.getElementById('btn-export-board-csv')?.addEventListener('click', exportBoardHistoryToCSV);
       }
     }
 
@@ -843,7 +992,7 @@
         pcTab.classList.remove('text-slate-600');
       }
 
-      const mobileNavBtns = document.querySelectorAll('nav.md\\:hidden button');
+      const mobileNavBtns = document.querySelectorAll('nav.md\:hidden button');
       mobileNavBtns.forEach(btn => btn.className = 'flex flex-col items-center gap-0.5 text-slate-500');
       const mbTab = document.getElementById(`tab-${tabName}-mb`);
       if (mbTab) {
@@ -887,7 +1036,7 @@
         container.innerHTML = '';
         snapshot.forEach((doc) => {
           const data = doc.data();
-          const isMe = data.sender === userName;
+          const isMe = data.userId ? (data.userId === userId) : (data.sender === userName);
           const div = document.createElement('div');
           div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
           div.innerHTML = `
@@ -941,11 +1090,13 @@
 
       try {
         await addDoc(collection(db, "chats"), {
+          userId: userId,
           sender: userName,
           message: msg,
           timestamp: serverTimestamp()
         });
         input.value = '';
+        syncUserProfileToFirebase();
       } catch (err) {
         console.error("チャット送信エラー:", err);
       }
@@ -961,11 +1112,13 @@
       try {
         await addDoc(collection(db, "board_items"), {
           type, title, date, content,
+          userId: userId,
           author: userName,
           createdAt: serverTimestamp()
         });
         document.getElementById('modalBoard').classList.add('hidden');
         document.getElementById('boardForm').reset();
+        syncUserProfileToFirebase();
       } catch (err) {
         console.error("掲示投稿エラー:", err);
       }

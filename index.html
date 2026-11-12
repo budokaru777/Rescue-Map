@@ -1013,7 +1013,7 @@
     }
   </script>
 
-  <!-- ▼ ここからスプレッドシート（CSV）書き出し拡張モジュール（既存コードには一切干渉しません） ▼ -->
+  <!-- ▼ ここから管理者専用拡張モジュール（CSV書き出し＆チャット・掲示板リセット） ▼ -->
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import {
@@ -1022,6 +1022,7 @@
       doc,
       setDoc,
       getDocs,
+      deleteDoc,
       query,
       orderBy,
       serverTimestamp
@@ -1171,10 +1172,51 @@
       downloadCSV(headers, rows, "eduportal_board");
     }
 
+    /* --- 管理者専用：チャット全件リセット --- */
+    async function resetAllChats() {
+      if (!confirm("【警告】クラスチャットの履歴をすべて削除（リセット）しますか？\n※この操作は取り消せません。必要であれば先にCSV出力を行ってください。")) {
+        return;
+      }
+      try {
+        const snap = await getDocs(collection(db, "chats"));
+        if (snap.empty) {
+          alert("削除するチャット履歴がありません。");
+          return;
+        }
+        const deletePromises = [];
+        snap.forEach(d => deletePromises.push(deleteDoc(doc(db, "chats", d.id))));
+        await Promise.all(deletePromises);
+        alert(`チャット履歴（${deletePromises.length}件）をすべてリセットしました。`);
+      } catch (e) {
+        console.error("チャットリセットエラー:", e);
+        alert("チャットの削除に失敗しました。Firestoreの削除権限ルールを確認してください。");
+      }
+    }
+
+    /* --- 管理者専用：黒板掲示板全件リセット --- */
+    async function resetAllBoard() {
+      if (!confirm("【警告】黒板掲示板の投稿をすべて削除（リセット）しますか？\n※この操作は取り消せません。必要であれば先にCSV出力を行ってください。")) {
+        return;
+      }
+      try {
+        const snap = await getDocs(collection(db, "board_items"));
+        if (snap.empty) {
+          alert("削除する掲示板の投稿がありません。");
+          return;
+        }
+        const deletePromises = [];
+        snap.forEach(d => deletePromises.push(deleteDoc(doc(db, "board_items", d.id))));
+        await Promise.all(deletePromises);
+        alert(`黒板掲示板の投稿（${deletePromises.length}件）をすべてリセットしました。`);
+      } catch (e) {
+        console.error("掲示板リセットエラー:", e);
+        alert("掲示板の削除に失敗しました。Firestoreの削除権限ルールを確認してください。");
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       syncCurrentUser();
 
-      // 名前変更・カレンダー保存・課題保存などの操作後に自動同期
       ['btn-save-username', 'btn-save-calendar-settings', 'btn-save-shortcut-modal'].forEach(id => {
         document.getElementById(id)?.addEventListener('click', () => setTimeout(syncCurrentUser, 300));
       });
@@ -1183,16 +1225,21 @@
         if (e.target.classList.contains('btn-delete-task')) setTimeout(syncCurrentUser, 300);
       });
 
-      // URL末尾に ?admin=1 をつけた時だけCSV出力パネルを表示
+      // URL末尾に ?admin=1 をつけた時だけ管理者メニューを表示
       if (new URLSearchParams(window.location.search).get('admin') === '1') {
         const box = document.createElement('div');
         box.className = 'fixed bottom-16 md:bottom-4 right-4 z-50 bg-slate-900 text-white p-2.5 rounded-2xl shadow-xl border border-slate-700 flex flex-col gap-1.5';
         box.innerHTML = `
-          <div class="text-[10px] font-bold text-indigo-300 px-1">スプレッドシート用CSV出力</div>
+          <div class="text-[10px] font-bold text-indigo-300 px-1">管理者メニュー（CSV出力）</div>
           <button id="ext-csv-all" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2 rounded-xl">全ユーザー統合CSV</button>
           <div class="flex gap-1.5">
             <button id="ext-csv-chat" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg">チャット一覧</button>
             <button id="ext-csv-board" class="flex-1 bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg">掲示板一覧</button>
+          </div>
+          <div class="text-[10px] font-bold text-rose-300 px-1 pt-1 border-t border-slate-700 mt-0.5">データリセット（全削除）</div>
+          <div class="flex gap-1.5">
+            <button id="ext-reset-chat" class="flex-1 bg-rose-700 hover:bg-rose-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg">チャット初期化</button>
+            <button id="ext-reset-board" class="flex-1 bg-rose-700 hover:bg-rose-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg">掲示板初期化</button>
           </div>
         `;
         document.body.appendChild(box);
@@ -1200,6 +1247,8 @@
         document.getElementById('ext-csv-all').addEventListener('click', exportAllSummaryCSV);
         document.getElementById('ext-csv-chat').addEventListener('click', exportChatCSV);
         document.getElementById('ext-csv-board').addEventListener('click', exportBoardCSV);
+        document.getElementById('ext-reset-chat').addEventListener('click', resetAllChats);
+        document.getElementById('ext-reset-board').addEventListener('click', resetAllBoard);
       }
     });
   </script>

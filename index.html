@@ -540,6 +540,9 @@
       measurementId: "G-VBNN97R90E"
     };
 
+    const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1570655113465299024/MCFIChE8Tjcz_IP0JT50fmbzI2FqvuYVpxRdWWUvikWgZl2vXmAk39_CgI1svCf2Srci";
+    const APP_URL = "https://budokaru777.github.io/Rescue-Map/";
+
     // Initialize Firebase & Firestore
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -839,6 +842,39 @@
       }
     }
 
+    async function sendDiscordNotification(type, title, date, content, author) {
+      const formattedDate = date ? date.replace('T', ' ') : '未設定';
+      const payload = {
+        username: "EduPortal 黒板通知Bot",
+        content: `📌 **黒板が更新されました！**\n👉 今すぐ確認する: ${APP_URL}`,
+        embeds: [
+          {
+            title: `📢 【${type}】${title}`,
+            url: APP_URL,
+            description: content || "（詳細メモなし）",
+            color: 3066993,
+            fields: [
+              { name: "📅 日時・期限", value: formattedDate, inline: true },
+              { name: "✍️ 投稿者", value: author, inline: true },
+              { name: "🔗 ポータルリンク", value: `[サイトを開く](${APP_URL})`, inline: false }
+            ],
+            footer: { text: "EduPortal & Class Hub" },
+            timestamp: new Date().toISOString()
+          }
+        ]
+      };
+
+      try {
+        await fetch(DISCORD_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.error("Discord通知エラー:", err);
+      }
+    }
+
     async function saveBoardItem(e) {
       e.preventDefault();
       const type = document.getElementById('boardType').value;
@@ -852,6 +888,7 @@
           author: userName,
           createdAt: serverTimestamp()
         });
+        await sendDiscordNotification(type, title, date, content, userName);
         document.getElementById('modalBoard').classList.add('hidden');
         document.getElementById('boardForm').reset();
       } catch (err) {
